@@ -52,21 +52,73 @@ export const editPost = async (argv) => {
       process.exit(1);
     }
     
-    // Prompt for edits
-    const config = getConfig();
-    const responses = await inquirer.prompt([
+    // Function to handle multiline input
+    const getMultilineInput = async (prompt, defaultText) => {
+      console.log(`${prompt} (Type 'EOF' on a new line when done)`);
+      console.log(`Current content: ${defaultText}`);
+      console.log('Enter new content:');
+      
+      let lines = [];
+      
+      // Set up recursive prompt for multiline input
+      const promptLine = async () => {
+        const { input } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'input',
+            message: '>'
+          }
+        ]);
+        
+        if (input === 'EOF') {
+          return lines.length > 0 ? lines.join('\n') : defaultText;
+        }
+        
+        lines.push(input);
+        return promptLine();
+      };
+      
+      return promptLine();
+    };
+    
+    // Ask if user wants to edit with multiline input
+    const { useMultiline } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'useMultiline',
+        message: 'Would you like to edit content with multiline input?',
+        default: true
+      }
+    ]);
+    
+    // Get title
+    const { title } = await inquirer.prompt([
       {
         type: 'input',
         name: 'title',
         message: 'Edit title:',
         default: post.title || ''
-      },
-      {
-        type: 'editor',
-        name: 'content',
-        message: 'Edit content:',
-        default: post.content
-      },
+      }
+    ]);
+    
+    // Get content based on user preference
+    let content;
+    if (useMultiline) {
+      content = await getMultilineInput('Edit content:', post.content);
+    } else {
+      const result = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'content',
+          message: 'Edit content:',
+          default: post.content
+        }
+      ]);
+      content = result.content;
+    }
+    
+    // Get publish date and platforms
+    const { publishDate, platforms } = await inquirer.prompt([
       {
         type: 'input',
         name: 'publishDate',
@@ -91,12 +143,14 @@ export const editPost = async (argv) => {
       }
     ]);
     
+    const config = getConfig();
+    
     // Update post in database
     const updatedPost = {
-      title: responses.title,
-      content: responses.content,
-      platforms: responses.platforms.join(','),
-      publish_date: responses.publishDate
+      title,
+      content,
+      platforms: platforms.join(','),
+      publish_date: publishDate
     };
     
     const success = updatePost(post.id, updatedPost);
@@ -105,7 +159,7 @@ export const editPost = async (argv) => {
       // Log the action
       logAction('post_edited', {
         postId: post.id,
-        title: responses.title
+        title: title
       });
       
       console.log(chalk.green('\n✓ Post updated successfully!'));

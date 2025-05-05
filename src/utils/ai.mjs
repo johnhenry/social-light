@@ -1,6 +1,6 @@
 import { OpenAI } from 'openai';
 import { getConfig } from './config.mjs';
-import { getPosts } from './db.mjs';
+import { getPosts, getDb } from './db.mjs';
 
 // Initialize OpenAI client
 let openaiClient = null;
@@ -86,18 +86,31 @@ export const generateTitle = async (content) => {
 export const suggestPublishDate = async () => {
   const openai = getOpenAIClient();
   
-  // Get historical posts for analysis
-  const posts = getPosts();
-  const today = new Date();
-  
-  if (!openai || posts.length < 3) {
-    // Fallback to simple date suggestion if AI is disabled or not enough data
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
-  }
+  // Get database connection and check if posts table exists
+  const db = getDb();
   
   try {
+    // Check if posts table exists
+    const tableExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='posts';").get();
+    
+    if (!tableExists) {
+      // If table doesn't exist, just return tomorrow's date
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toISOString().split('T')[0];
+    }
+    
+    // Get historical posts for analysis if table exists
+    const posts = getPosts();
+    const today = new Date();
+    
+    if (!openai || posts.length < 3) {
+      // Fallback to simple date suggestion if AI is disabled or not enough data
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toISOString().split('T')[0];
+    }
+    
     // Format post history for the AI
     const postHistory = posts
       .filter(post => post.publish_date)
@@ -142,6 +155,7 @@ export const suggestPublishDate = async () => {
     console.error('Error suggesting publish date:', error.message);
     
     // Fallback
+    const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split('T')[0];

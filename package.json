@@ -5,12 +5,13 @@
   "main": "src/index.mjs",
   "type": "module",
   "bin": {
-    "socialite": "./bin/socialite"
+    "socialite": "./src/index.mjs"
   },
   "scripts": {
     "start": "node src/index.mjs",
     "dev": "node --watch src/index.mjs",
     "server": "node src/server/index.mjs",
+    "postinstall": "chmod +x src/index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

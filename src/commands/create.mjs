@@ -2,9 +2,11 @@ import fs from 'fs-extra';
 import chalk from 'chalk';
 import ora from 'ora';
 import inquirer from 'inquirer';
+import path from 'path';
+import os from 'os';
 
-import { getConfig } from '../utils/config.mjs';
-import { createPost as dbCreatePost, logAction } from '../utils/db.mjs';
+import { getConfig, configExists } from '../utils/config.mjs';
+import { createPost as dbCreatePost, logAction, initializeDb } from '../utils/db.mjs';
 import { generateTitle, suggestPublishDate, enhanceContent } from '../utils/ai.mjs';
 
 /**
@@ -18,6 +20,21 @@ export const createPost = async (argv) => {
   let content = '';
   
   try {
+    // Check if initialized and initialize if needed
+    if (!configExists()) {
+      console.log(chalk.yellow('Socialite is not initialized yet.'));
+      console.log('Initializing with default settings...');
+      
+      // Create config directory
+      const configDir = path.join(os.homedir(), '.socialite');
+      fs.ensureDirSync(configDir);
+      
+      // Initialize database
+      const dbInitialized = initializeDb();
+      if (!dbInitialized) {
+        throw new Error('Failed to initialize database');
+      }
+    }
     // File-based creation
     if (argv.file) {
       const spinner = ora(`Reading file ${argv.file}...`).start();
@@ -32,14 +49,58 @@ export const createPost = async (argv) => {
     } 
     // Interactive creation
     else {
-      const { postContent } = await inquirer.prompt([
+      // Function to handle multiline input
+      const getMultilineInput = async (prompt) => {
+        console.log(`${prompt} (Type 'EOF' on a new line when done)`)
+        let lines = [];
+        let line = '';
+        
+        // Set up recursive prompt for multiline input
+        const promptLine = async () => {
+          const { input } = await inquirer.prompt([
+            {
+              type: 'input',
+              name: 'input',
+              message: '>' 
+            }
+          ]);
+          
+          if (input === 'EOF') {
+            return lines.join('\n');
+          }
+          
+          lines.push(input);
+          return promptLine();
+        };
+        
+        return promptLine();
+      };
+      
+      // Ask if user wants multiline input
+      const { useMultiline } = await inquirer.prompt([
         {
-          type: 'editor',
-          name: 'postContent',
-          message: 'Enter your post content:',
-          validate: input => input.trim().length > 0 ? true : 'Content cannot be empty'
+          type: 'confirm',
+          name: 'useMultiline',
+          message: 'Would you like to enter multiline content?',
+          default: true
         }
       ]);
+      
+      // Get content based on user preference
+      let postContent;
+      if (useMultiline) {
+        postContent = await getMultilineInput('Enter your post content:');
+      } else {
+        const result = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'postContent',
+            message: 'Enter your post content:',
+            validate: input => input.trim().length > 0 ? true : 'Content cannot be empty'
+          }
+        ]);
+        postContent = result.postContent;
+      }
       
       content = postContent;
     }

@@ -5,6 +5,21 @@ import Database from 'better-sqlite3';
 import { getConfig } from './config.mjs';
 
 /**
+ * Check if database tables are initialized
+ * @param {Object} db - Database connection
+ * @returns {boolean} True if tables are initialized
+ */
+const checkTablesInitialized = (db) => {
+  try {
+    const tableExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='posts';").get();
+    return Boolean(tableExists);
+  } catch (error) {
+    console.error('Error checking database tables:', error);
+    return false;
+  }
+};
+
+/**
  * Get database connection
  * @returns {Object} Database connection
  * @example
@@ -23,40 +38,75 @@ export const getDb = () => {
   // Connect to database
   const db = new Database(dbPath);
   
+  // Check if tables exist and initialize if needed
+  if (!checkTablesInitialized(db)) {
+    // Create tables directly to avoid circular dependency
+    try {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS posts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT,
+          content TEXT NOT NULL,
+          platforms TEXT,
+          publish_date TEXT,
+          published INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          action TEXT NOT NULL,
+          details TEXT,
+          timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+    } catch (error) {
+      console.error('Error initializing database tables:', error);
+    }
+  }
+  
   return db;
 };
 
 /**
  * Initialize database schema
+ * @param {Object} existingDb - Optional existing database connection
  * @returns {boolean} True if successful
  * @example
  * const success = initializeDb();
  */
-export const initializeDb = () => {
-  const db = getDb();
+export const initializeDb = (existingDb = null) => {
+  // Use provided database connection or get a new one
+  const db = existingDb || getDb();
   
-  // Create posts table if it doesn't exist
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS posts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT,
-      content TEXT NOT NULL,
-      platforms TEXT,
-      publish_date TEXT,
-      published INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-    );
+  try {
+    // Create posts table if it doesn't exist
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        content TEXT NOT NULL,
+        platforms TEXT,
+        publish_date TEXT,
+        published INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
 
-    CREATE TABLE IF NOT EXISTS logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      action TEXT NOT NULL,
-      details TEXT,
-      timestamp TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-  
-  return true;
+      CREATE TABLE IF NOT EXISTS logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        action TEXT NOT NULL,
+        details TEXT,
+        timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    
+    return true;
+  } catch (error) {
+    console.error('Error initializing database:', error);
+    return false;
+  }
 };
 
 /**

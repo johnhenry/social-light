@@ -41,6 +41,14 @@ export const initialize = async (argv) => {
     // Create default config
     const config = createDefaultConfig();
     
+    // Initialize database first
+    spinner.text = 'Setting up database...';
+    const dbInitialized = initializeDb();
+    
+    if (!dbInitialized) {
+      throw new Error('Failed to initialize database');
+    }
+    
     // Configure platforms
     spinner.text = 'Setting up platforms...';
     const { platforms } = await inquirer.prompt([
