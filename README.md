@@ -1,13 +1,13 @@
 # Socialite
 
-An AI-powered social media scheduling tool with CLI and web interface.
+An AI-powered social media scheduling tool for Bluesky with CLI and web interface.
 
 ## Features
 
 - **CLI Interface**: Create, manage, and publish posts directly from your terminal
 - **Web Interface**: Optional local web server for a visual post management experience
 - **AI Assistance**: Automatic title generation, date suggestions, and content enhancement
-- **Multi-Platform**: Publish to Twitter, Bluesky, and TikTok from a single interface
+- **Bluesky Integration**: Publish to Bluesky with ease
 - **Scheduling**: Schedule posts ahead of time with smart AI date suggestions
 - **Continuous Publishing**: Run in daemon mode to automatically publish scheduled posts
 
@@ -28,21 +28,21 @@ npm link
 
 ## API Configuration
 
-To use Socialite with social media platforms, you need to set up API keys:
+To use Socialite with Bluesky, you need to set up your credentials:
 
-1. Create a `.env` file in the project root
-2. Add your API keys following the format in `.env.example`
-3. See `API_SETUP.md` for detailed instructions on obtaining API keys
+1. Create a `.env` file in the project root or complete the prompts during `socialite init`
+2. Add your credentials following the format in `.env.example`
+3. See `API_SETUP.md` for detailed instructions on obtaining credentials
 
 Example:
 ```
 # OpenAI API for AI features
 OPENAI_API_KEY=your_openai_api_key
 
-# Twitter/X credentials
-TWITTER_API_KEY=your_twitter_api_key
-TWITTER_API_SECRET=your_twitter_api_secret
-# ... and so on
+# Bluesky credentials
+BLUESKY_HANDLE=your_handle.bsky.social
+BLUESKY_APP_PASSWORD=your_bluesky_app_password
+BLUESKY_SERVICE=https://bsky.social
 ```
 
 ## CLI Usage
@@ -56,7 +56,8 @@ socialite init
 This will:
 - Create a configuration file at `~/.socialite/config.json`
 - Initialize a SQLite database at `~/.socialite/socialite.db`
-- Set up your default platforms
+- Set up Bluesky as the default platform
+- Collect your Bluesky credentials
 
 ### Create a Post
 
@@ -122,43 +123,23 @@ Configuration is stored in `~/.socialite/config.json` and can be modified direct
 ```json
 {
   "dbPath": "~/.socialite/socialite.db",
-  "defaultPlatforms": ["twitter", "bluesky"],
+  "defaultPlatforms": ["Bluesky"],
   "aiEnabled": true
 }
 ```
 
 ### Platform Setup
 
-To publish to social media platforms, you'll need to set up API credentials for each platform you want to use:
-
-#### Twitter
-- Create a Twitter Developer account and app
-- Generate API key, API secret, access token, and access token secret
-- Add these to your environment variables:
-  ```
-  TWITTER_API_KEY=your_api_key
-  TWITTER_API_SECRET=your_api_secret
-  TWITTER_ACCESS_TOKEN=your_access_token
-  TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret
-  ```
+To publish to Bluesky, you'll need to set up your credentials:
 
 #### Bluesky
-- Create a Bluesky account
+- Create a Bluesky account if you don't have one
 - Generate an app password in your account settings
 - Add these to your environment variables:
   ```
   BLUESKY_HANDLE=your_handle.bsky.social
   BLUESKY_APP_PASSWORD=your_app_password
-  ```
-
-#### TikTok
-- Create a TikTok developer account and app
-- Generate client key, client secret, and access token
-- Add these to your environment variables:
-  ```
-  TIKTOK_CLIENT_KEY=your_client_key
-  TIKTOK_CLIENT_SECRET=your_client_secret
-  TIKTOK_ACCESS_TOKEN=your_access_token
+  BLUESKY_SERVICE=https://bsky.social
   ```
 
 ## AI Features
@@ -200,7 +181,7 @@ socialite/
 - **SQLite** for local database storage
 - **Express** for the web server
 - **OpenAI API** for AI-powered features
-- **Platform APIs** for social media integrations
+- **Bluesky AT Protocol** for social media integration
 
 ## License
 

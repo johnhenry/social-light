@@ -125,28 +125,16 @@ class UnsupportedPlatform extends SocialPlatform {
 export const PlatformFactory = {
   /**
    * Create a new platform instance
-   * @param {string} platform - Platform name (e.g., 'twitter', 'bluesky', 'tiktok')
+   * @param {string} platform - Platform name (only 'bluesky' is supported)
    * @param {Object} config - Platform-specific configuration
    * @returns {SocialPlatform} Platform instance
    */
   create(platform, config = {}) {
     switch (platform.toLowerCase()) {
-      // case 'twitter':
-      // case 'x':
-      //   // Dynamic import to avoid circular dependencies
-      //   return import('./twitter.mjs').then(module => new module.TwitterPlatform(config));
       case "bluesky":
         return import("./bluesky.mjs").then(
           (module) => new module.BlueskyPlatform(config)
         );
-      // case "tiktok":
-      //   return import("./tiktok.mjs").then(
-      //     (module) => new module.TikTokPlatform(config)
-      //   );
-      // case "instagram":
-      // case "linkedin":
-      //   // Return a mock platform for unsupported platforms
-      //   return Promise.resolve(new UnsupportedPlatform(platform, config));
       default:
         throw new Error(`Unsupported platform: ${platform}`);
     }

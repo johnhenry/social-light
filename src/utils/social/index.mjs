@@ -1,6 +1,10 @@
 import { PlatformFactory } from "./base.mjs";
 import { getConfig } from "../config.mjs";
 import { logAction } from "../db.mjs";
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 /**
  * Social API manager for handling multiple platforms

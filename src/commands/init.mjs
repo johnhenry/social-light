@@ -1,6 +1,10 @@
 import chalk from "chalk";
 import ora from "ora";
 import inquirer from "inquirer";
+import fs from 'fs-extra';
+import path from 'path';
+import os from 'os';
+import dotenv from 'dotenv';
 
 import {
   createDefaultConfig,
@@ -8,6 +12,9 @@ import {
   updateConfig,
 } from "../utils/config.mjs";
 import { initializeDb } from "../utils/db.mjs";
+
+// Load environment variables
+dotenv.config();
 
 /**
  * Initialize the Socialite application
@@ -56,21 +63,105 @@ export const initialize = async (argv) => {
 
     // Configure platforms
     spinner.text = "Setting up platforms...";
-    const { platforms } = await inquirer.prompt([
+    
+    // Bluesky is the only platform we support
+    const platforms = ["Bluesky"];
+    
+    // Check if we need to collect Bluesky credentials
+    spinner.text = "Checking Bluesky credentials...";
+    spinner.stop();
+    
+    // Get existing credentials from .env, if available
+    const blueskyHandle = process.env.BLUESKY_HANDLE || '';
+    const blueskyPassword = process.env.BLUESKY_APP_PASSWORD || '';
+    const blueskyService = process.env.BLUESKY_SERVICE || 'https://bsky.social';
+    
+    console.log(chalk.cyan("\nBluesky Account Setup"));
+    console.log(chalk.gray("Create an app password in your Bluesky account settings"));
+    
+    const { collectCredentials } = await inquirer.prompt([
       {
-        type: "checkbox",
-        name: "platforms",
-        message: "Select default platforms:",
-        choices: [
-          // { name: 'Twitter', value: 'Twitter' },
-          { name: "Bluesky", value: "Bluesky" },
-          // { name: 'TikTok', value: 'TikTok' },
-          // { name: 'Instagram', value: 'Instagram' },
-          // { name: 'LinkedIn', value: 'LinkedIn' }
-        ],
-      },
+        type: "confirm",
+        name: "collectCredentials",
+        message: "Would you like to set up your Bluesky credentials now?",
+        default: true,
+      }
     ]);
-
+    
+    let blueskyCredentials = {};
+    
+    if (collectCredentials) {
+      blueskyCredentials = await inquirer.prompt([
+        {
+          type: "input",
+          name: "handle",
+          message: "Enter your Bluesky handle (username with .bsky.social):",
+          default: blueskyHandle,
+          validate: (input) => input.includes('.') ? true : "Handle should include domain (e.g., username.bsky.social)"
+        },
+        {
+          type: "password",
+          name: "password",
+          message: "Enter your Bluesky app password (created in your Bluesky account settings):",
+          mask: '*',
+          validate: (input) => input.length > 0 ? true : "Password cannot be empty"
+        },
+        {
+          type: "input",
+          name: "service",
+          message: "Enter your Bluesky service URL:",
+          default: blueskyService
+        }
+      ]);
+      
+      // Save credentials to .env file
+      const envPath = path.join(process.cwd(), '.env');
+      let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
+      
+      // Parse existing .env content
+      const envLines = envContent.split('\n');
+      const envMap = {};
+      
+      envLines.forEach(line => {
+        if (line.includes('=')) {
+          const [key, value] = line.split('=');
+          envMap[key.trim()] = value.trim();
+        }
+      });
+      
+      // Update with new credentials
+      envMap['BLUESKY_HANDLE'] = blueskyCredentials.handle;
+      envMap['BLUESKY_APP_PASSWORD'] = blueskyCredentials.password;
+      envMap['BLUESKY_SERVICE'] = blueskyCredentials.service;
+      
+      // If OpenAI key doesn't exist, prompt for it
+      if (!envMap['OPENAI_API_KEY']) {
+        const { openaiKey } = await inquirer.prompt([
+          {
+            type: "input",
+            name: "openaiKey",
+            message: "Enter your OpenAI API key for AI features (press Enter to skip):",
+          }
+        ]);
+        
+        if (openaiKey) {
+          envMap['OPENAI_API_KEY'] = openaiKey;
+        }
+      }
+      
+      // Convert map back to env string
+      const newEnvContent = Object.entries(envMap)
+        .map(([key, value]) => `${key}=${value}`)
+        .join('\n');
+      
+      // Write to .env file
+      fs.writeFileSync(envPath, newEnvContent);
+      
+      console.log(chalk.green("\n✓ Credentials saved to .env file"));
+    }
+    
+    spinner.start("Updating configuration...");
+    
     // Update config with selected platforms
     updateConfig({ defaultPlatforms: platforms });
 
