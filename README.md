@@ -1,6 +1,6 @@
 # Social Light
 
-<img src="https://raw.githubusercontent.com/johnhenry/spintax/main/src/server/client/logo.jpg" alt="social light logo" style="width:256px; height:256px">
+<img src="https://raw.githubusercontent.com/johnhenry/social-light/main/src/server/client/logo.jpg" alt="social light logo" style="width:256px; height:256px">
 
 An AI-powered social media scheduling tool for Bluesky with CLI and web interface. More platforms coming soon!
 
@@ -104,7 +104,7 @@ social-light publish --continuous
 
 Open the web interface to manage post visually
 
-<img src="https://raw.githubusercontent.com/johnhenry/spintax/main/server.png" alt="server" style="width:256px; height:256px">
+<img src="https://raw.githubusercontent.com/johnhenry/social-light/main/server.png" alt="server" style="width:256px; height:256px">
 
 ```bash
 # Start the web server
