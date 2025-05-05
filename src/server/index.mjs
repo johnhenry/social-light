@@ -1,12 +1,23 @@
-import express from 'express';
-import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import chalk from 'chalk';
-import { getPosts, getPostById, createPost, updatePost, markAsPublished, logAction } from '../utils/db.mjs';
-import { getSocialAPI } from '../utils/social/index.mjs';
-import { generateTitle, suggestPublishDate, enhanceContent } from '../utils/ai.mjs';
-import { getConfig } from '../utils/config.mjs';
+import express from "express";
+import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
+import chalk from "chalk";
+import {
+  getPosts,
+  getPostById,
+  createPost,
+  updatePost,
+  markAsPublished,
+  logAction,
+} from "../utils/db.mjs";
+import { getSocialAPI } from "../utils/social/index.mjs";
+import {
+  generateTitle,
+  suggestPublishDate,
+  enhanceContent,
+} from "../utils/ai.mjs";
+import { getConfig } from "../utils/config.mjs";
 
 // Get directory name in ESM
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -18,27 +29,31 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const startServer = async (argv) => {
   const app = express();
   const port = argv.port || 3000;
-  
+
   // Middleware
   app.use(cors());
   app.use(express.json());
-  
+
   // Serve static files from 'client' directory
-  app.use(express.static(path.join(__dirname, 'client')));
-  
+  app.use(express.static(path.join(__dirname, "client")));
+
   // API routes
   setupApiRoutes(app);
-  
+
   // Serve React app for all other routes
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client', 'index.html'));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "client", "index.html"));
   });
-  
+
   // Start server
   app.listen(port, () => {
     console.log(chalk.green(`✓ Server started on port ${port}`));
-    console.log(chalk.cyan(`Open http://localhost:${port} in your browser to access the web interface`));
-    console.log(chalk.gray('Press Ctrl+C to stop the server'));
+    console.log(
+      chalk.cyan(
+        `Open http://localhost:${port} in your browser to access the web interface`
+      )
+    );
+    console.log(chalk.gray("Press Ctrl+C to stop the server"));
   });
 };
 
@@ -48,197 +63,199 @@ export const startServer = async (argv) => {
  */
 const setupApiRoutes = (app) => {
   // Get API info
-  app.get('/api', (req, res) => {
+  app.get("/api", (req, res) => {
     res.json({
-      name: 'Socialite API',
-      version: '1.0.0',
+      name: "Socialite API",
+      version: "1.0.0",
       endpoints: [
-        '/api/posts',
-        '/api/posts/:id',
-        '/api/publish/:id',
-        '/api/ai/title',
-        '/api/ai/date',
-        '/api/ai/enhance',
-        '/api/config'
-      ]
+        "/api/posts",
+        "/api/posts/:id",
+        "/api/publish/:id",
+        "/api/ai/title",
+        "/api/ai/date",
+        "/api/ai/enhance",
+        "/api/config",
+      ],
     });
   });
-  
+
   // Get configuration
-  app.get('/api/config', (req, res) => {
+  app.get("/api/config", (req, res) => {
     const config = getConfig();
-    
+
     // Remove sensitive information
     const safeConfig = {
       ...config,
       // Add default platforms for client
       platforms: [
-        { id: 'twitter', name: 'Twitter', icon: 'twitter' },
-        { id: 'bluesky', name: 'Bluesky', icon: 'cloud' },
-        { id: 'tiktok', name: 'TikTok', icon: 'music' }
-      ]
+        // { id: 'twitter', name: 'Twitter', icon: 'twitter' },
+        { id: "bluesky", name: "Bluesky", icon: "cloud" },
+        // { id: 'tiktok', name: 'TikTok', icon: 'music' }
+      ],
     };
-    
+
     res.json(safeConfig);
   });
-  
+
   // Get all posts
-  app.get('/api/posts', (req, res) => {
+  app.get("/api/posts", (req, res) => {
     try {
-      const published = req.query.published === 'true';
+      const published = req.query.published === "true";
       const posts = getPosts({ published });
       res.json(posts);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Get post by ID
-  app.get('/api/posts/:id', (req, res) => {
+  app.get("/api/posts/:id", (req, res) => {
     try {
       const post = getPostById(parseInt(req.params.id, 10));
-      
+
       if (!post) {
-        return res.status(404).json({ error: 'Post not found' });
+        return res.status(404).json({ error: "Post not found" });
       }
-      
+
       res.json(post);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Create new post
-  app.post('/api/posts', async (req, res) => {
+  app.post("/api/posts", async (req, res) => {
     try {
       const { title, content, platforms, publish_date } = req.body;
-      
+
       if (!content) {
-        return res.status(400).json({ error: 'Content is required' });
+        return res.status(400).json({ error: "Content is required" });
       }
-      
+
       const postId = createPost({
         title,
         content,
-        platforms: Array.isArray(platforms) ? platforms.join(',') : platforms,
-        publish_date
+        platforms: Array.isArray(platforms) ? platforms.join(",") : platforms,
+        publish_date,
       });
-      
-      logAction('post_created', { postId, source: 'web' });
-      
+
+      logAction("post_created", { postId, source: "web" });
+
       res.status(201).json({ id: postId });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Update post
-  app.put('/api/posts/:id', async (req, res) => {
+  app.put("/api/posts/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       const { title, content, platforms, publish_date } = req.body;
-      
+
       const post = getPostById(id);
-      
+
       if (!post) {
-        return res.status(404).json({ error: 'Post not found' });
+        return res.status(404).json({ error: "Post not found" });
       }
-      
+
       const success = updatePost(id, {
         title,
         content,
-        platforms: Array.isArray(platforms) ? platforms.join(',') : platforms,
-        publish_date
+        platforms: Array.isArray(platforms) ? platforms.join(",") : platforms,
+        publish_date,
       });
-      
+
       if (!success) {
-        return res.status(500).json({ error: 'Failed to update post' });
+        return res.status(500).json({ error: "Failed to update post" });
       }
-      
-      logAction('post_updated', { postId: id, source: 'web' });
-      
+
+      logAction("post_updated", { postId: id, source: "web" });
+
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Publish post
-  app.post('/api/publish/:id', async (req, res) => {
+  app.post("/api/publish/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       const post = getPostById(id);
-      
+
       if (!post) {
-        return res.status(404).json({ error: 'Post not found' });
+        return res.status(404).json({ error: "Post not found" });
       }
-      
+
       if (post.published) {
-        return res.status(400).json({ error: 'Post is already published' });
+        return res.status(400).json({ error: "Post is already published" });
       }
-      
+
       if (!post.platforms) {
-        return res.status(400).json({ error: 'No platforms specified for post' });
+        return res
+          .status(400)
+          .json({ error: "No platforms specified for post" });
       }
-      
+
       // Initialize social API
       const socialAPI = getSocialAPI();
-      const platforms = post.platforms.split(',').map(p => p.trim());
-      
+      const platforms = post.platforms.split(",").map((p) => p.trim());
+
       // Publish post to specified platforms
       const result = await socialAPI.post({
         text: post.content,
         title: post.title,
-        platforms
+        platforms,
       });
-      
+
       // Check if post was successfully published to at least one platform
-      const anySuccess = Object.values(result.results).some(r => r.success);
-      
+      const anySuccess = Object.values(result.results).some((r) => r.success);
+
       if (anySuccess) {
         markAsPublished(id);
-        
+
         // Log the action with platform results
-        logAction('post_published', {
+        logAction("post_published", {
           postId: id,
           platforms: result.results,
-          source: 'web'
+          source: "web",
         });
-        
+
         res.json({
           success: true,
-          platforms: result.results
+          platforms: result.results,
         });
       } else {
         res.status(500).json({
           success: false,
-          error: 'Failed to publish to any platform',
-          platforms: result.results
+          error: "Failed to publish to any platform",
+          platforms: result.results,
         });
       }
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Generate title with AI
-  app.post('/api/ai/title', async (req, res) => {
+  app.post("/api/ai/title", async (req, res) => {
     try {
       const { content } = req.body;
-      
+
       if (!content) {
-        return res.status(400).json({ error: 'Content is required' });
+        return res.status(400).json({ error: "Content is required" });
       }
-      
+
       const title = await generateTitle(content);
       res.json({ title });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Suggest publish date with AI
-  app.get('/api/ai/date', async (req, res) => {
+  app.get("/api/ai/date", async (req, res) => {
     try {
       const date = await suggestPublishDate();
       res.json({ date });
@@ -246,20 +263,20 @@ const setupApiRoutes = (app) => {
       res.status(500).json({ error: error.message });
     }
   });
-  
+
   // Enhance content with AI
-  app.post('/api/ai/enhance', async (req, res) => {
+  app.post("/api/ai/enhance", async (req, res) => {
     try {
       const { content, platform } = req.body;
-      
+
       if (!content) {
-        return res.status(400).json({ error: 'Content is required' });
+        return res.status(400).json({ error: "Content is required" });
       }
-      
+
       if (!platform) {
-        return res.status(400).json({ error: 'Platform is required' });
+        return res.status(400).json({ error: "Platform is required" });
       }
-      
+
       const enhanced = await enhanceContent(content, platform);
       res.json({ enhanced });
     } catch (error) {

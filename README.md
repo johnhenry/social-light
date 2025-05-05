@@ -26,6 +26,25 @@ chmod +x src/index.mjs
 npm link
 ```
 
+## API Configuration
+
+To use Socialite with social media platforms, you need to set up API keys:
+
+1. Create a `.env` file in the project root
+2. Add your API keys following the format in `.env.example`
+3. See `API_SETUP.md` for detailed instructions on obtaining API keys
+
+Example:
+```
+# OpenAI API for AI features
+OPENAI_API_KEY=your_openai_api_key
+
+# Twitter/X credentials
+TWITTER_API_KEY=your_twitter_api_key
+TWITTER_API_SECRET=your_twitter_api_secret
+# ... and so on
+```
+
 ## CLI Usage
 
 ### Initialize Socialite
