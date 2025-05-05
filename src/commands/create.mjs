@@ -49,13 +49,13 @@ export const createPost = async (argv) => {
     } 
     // Interactive creation
     else {
-      // Function to handle multiline input
-      const getMultilineInput = async (prompt) => {
-        console.log(`${prompt} (Type 'EOF' on a new line when done)`)
+      // Function to handle input with 3 empty lines to end
+      const getContentInput = async (prompt) => {
+        console.log(`${prompt} (Press Enter 3 times in a row when done)`)
         let lines = [];
-        let line = '';
+        let emptyLineCount = 0;
         
-        // Set up recursive prompt for multiline input
+        // Set up recursive prompt for input
         const promptLine = async () => {
           const { input } = await inquirer.prompt([
             {
@@ -65,8 +65,22 @@ export const createPost = async (argv) => {
             }
           ]);
           
-          if (input === 'EOF') {
-            return lines.join('\n');
+          // Check for empty line
+          if (input.trim() === '') {
+            emptyLineCount++;
+            
+            // If we have 3 consecutive empty lines, we're done
+            if (emptyLineCount >= 3) {
+              // Remove the last empty lines (if any) from the result
+              while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+                lines.pop();
+              }
+              console.log(chalk.green('\n✓ Content input complete'));
+              return lines.join('\n');
+            }
+          } else {
+            // Reset empty line counter when non-empty input is received
+            emptyLineCount = 0;
           }
           
           lines.push(input);
@@ -76,33 +90,8 @@ export const createPost = async (argv) => {
         return promptLine();
       };
       
-      // Ask if user wants multiline input
-      const { useMultiline } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'useMultiline',
-          message: 'Would you like to enter multiline content?',
-          default: true
-        }
-      ]);
-      
-      // Get content based on user preference
-      let postContent;
-      if (useMultiline) {
-        postContent = await getMultilineInput('Enter your post content:');
-      } else {
-        const result = await inquirer.prompt([
-          {
-            type: 'input',
-            name: 'postContent',
-            message: 'Enter your post content:',
-            validate: input => input.trim().length > 0 ? true : 'Content cannot be empty'
-          }
-        ]);
-        postContent = result.postContent;
-      }
-      
-      content = postContent;
+      // Get post content
+      content = await getContentInput('Enter your post content:');
     }
     
     // Generate title with AI or prompt for manual entry
@@ -162,11 +151,7 @@ export const createPost = async (argv) => {
         name: 'selectedPlatforms',
         message: 'Select platforms to publish to:',
         choices: [
-          { name: 'Twitter', value: 'Twitter', checked: config.defaultPlatforms.includes('Twitter') },
-          { name: 'Bluesky', value: 'Bluesky', checked: config.defaultPlatforms.includes('Bluesky') },
-          { name: 'TikTok', value: 'TikTok', checked: config.defaultPlatforms.includes('TikTok') },
-          { name: 'Instagram', value: 'Instagram', checked: config.defaultPlatforms.includes('Instagram') },
-          { name: 'LinkedIn', value: 'LinkedIn', checked: config.defaultPlatforms.includes('LinkedIn') }
+          { name: 'Bluesky', value: 'Bluesky', checked: config.defaultPlatforms.includes('Bluesky') }
         ]
       }
     ]);
