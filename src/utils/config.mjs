@@ -1,22 +1,22 @@
-import fs from 'fs-extra';
-import path from 'path';
-import os from 'os';
+import fs from "fs-extra";
+import path from "path";
+import os from "os";
 
 // Default configuration
 const defaultConfig = {
-  dbPath: '~/.socialite/socialite.db',
-  defaultPlatforms: ['Bluesky'],
+  dbPath: "~/.social-light/social-light.db",
+  defaultPlatforms: ["Bluesky"],
   aiEnabled: true,
   credentials: {
     openai: {
-      apiKey: ''
+      apiKey: "",
     },
     bluesky: {
-      handle: '',
-      password: '',
-      service: 'https://bsky.social'
-    }
-  }
+      handle: "",
+      password: "",
+      service: "https://bsky.social",
+    },
+  },
 };
 
 /**
@@ -26,7 +26,7 @@ const defaultConfig = {
  * const configPath = getConfigPath();
  */
 export const getConfigPath = () => {
-  return path.join(os.homedir(), '.socialite', 'config.json');
+  return path.join(os.homedir(), ".social-light", "config.json");
 };
 
 /**
@@ -48,10 +48,10 @@ export const configExists = () => {
 export const createDefaultConfig = () => {
   const configPath = getConfigPath();
   const configDir = path.dirname(configPath);
-  
+
   fs.ensureDirSync(configDir);
   fs.writeJsonSync(configPath, defaultConfig, { spaces: 2 });
-  
+
   return defaultConfig;
 };
 
@@ -66,7 +66,7 @@ export const getConfig = () => {
   if (!configExists()) {
     return createDefaultConfig();
   }
-  
+
   return fs.readJsonSync(getConfigPath());
 };
 
@@ -80,9 +80,9 @@ export const getConfig = () => {
 export const updateConfig = (updates) => {
   const config = getConfig();
   const newConfig = { ...config, ...updates };
-  
+
   fs.writeJsonSync(getConfigPath(), newConfig, { spaces: 2 });
-  
+
   return newConfig;
 };
 
@@ -108,20 +108,20 @@ export const getCredentials = (platform) => {
  */
 export const updateCredentials = (platform, credentials) => {
   const config = getConfig();
-  
+
   // Ensure credentials object exists
   if (!config.credentials) {
     config.credentials = {};
   }
-  
+
   // Update credentials for the platform
   config.credentials[platform.toLowerCase()] = {
     ...config.credentials[platform.toLowerCase()],
-    ...credentials
+    ...credentials,
   };
-  
+
   // Save updated config
   fs.writeJsonSync(getConfigPath(), config, { spaces: 2 });
-  
+
   return config;
 };

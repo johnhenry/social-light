@@ -1,11 +1,11 @@
 {
-  "name": "socialite",
-  "version": "1.0.0",
+  "name": "social-light",
+  "version": "0.0.0",
   "description": "AI-powered social media scheduling tool",
   "main": "src/index.mjs",
   "type": "module",
   "bin": {
-    "socialite": "./src/index.mjs"
+    "social-light": "./src/index.mjs"
   },
   "scripts": {
     "start": "node src/index.mjs",
@@ -40,6 +40,10 @@
     "react-dom": "^18.2.0",
     "vite": "^5.0.10",
     "yargs": "^17.7.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/johnhenry/social-light"
   },
   "engines": {
     "node": ">=20.9.0"

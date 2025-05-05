@@ -1,8 +1,8 @@
-# Socialite Project Development Summary
+# Social Light Project Development Summary
 
 ## Project Overview
 
-We developed "Socialite," a Node.js CLI and web application for AI-powered social media post scheduling. The application allows users to create, schedule, and publish content to multiple social media platforms using a command-line interface or a web UI.
+We developed "Social Light," a Node.js CLI and web application for AI-powered social media post scheduling. The application allows users to create, schedule, and publish content to multiple social media platforms using a command-line interface or a web UI.
 
 ## Key Features Implemented
 
@@ -19,7 +19,7 @@ We developed "Socialite," a Node.js CLI and web application for AI-powered socia
 ### Core Directory Structure
 
 ```
-socialite/
+social-light/
 ├── src/
 │   ├── commands/       # CLI command implementations
 │   ├── utils/          # Utility modules

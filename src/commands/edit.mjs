@@ -16,7 +16,7 @@ export const editPost = async (argv) => {
       console.log(chalk.yellow("No unpublished posts found to edit."));
       console.log(
         chalk.gray("Run"),
-        chalk.cyan("socialite create"),
+        chalk.cyan("social-light create"),
         chalk.gray("to create a new post.")
       );
       return;
@@ -179,12 +179,12 @@ export const editPost = async (argv) => {
       console.log(chalk.green("\n✓ Post updated successfully!"));
       console.log(
         chalk.gray("Run"),
-        chalk.cyan("socialite unpublished"),
+        chalk.cyan("social-light unpublished"),
         chalk.gray("to see your updated post.")
       );
       console.log(
         chalk.gray("Run"),
-        chalk.cyan("socialite publish"),
+        chalk.cyan("social-light publish"),
         chalk.gray("to publish eligible posts.")
       );
     } else {

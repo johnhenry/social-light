@@ -1,4 +1,4 @@
-Here's a **Product Requirements Document (PRD)** for your CLI + Web hybrid AI-powered social scheduling tool, named **Socialite**.
+Here's a **Product Requirements Document (PRD)** for your CLI + Web hybrid AI-powered social scheduling tool, named **Social Light**.
 
 ---
 
@@ -6,11 +6,11 @@ Here's a **Product Requirements Document (PRD)** for your CLI + Web hybrid AI-po
 
 ### Product Name
 
-**Socialite**
+**Social Light**
 
 ### Overview
 
-**Socialite** is a command-line tool and optional local web server that helps users manage and schedule social media posts. It leverages AI to assist with post generation, scheduling, and cross-platform publishing.
+**Social Light** is a command-line tool and optional local web server that helps users manage and schedule social media posts. It leverages AI to assist with post generation, scheduling, and cross-platform publishing.
 
 ---
 
@@ -32,20 +32,20 @@ Command-line tool with subcommands (inspired by Git/Heroku-style commands).
 
 #### Web UI (Optional)
 
-Local web interface launched with `socialite server` to browse, create, and edit posts.
+Local web interface launched with `social-light server` to browse, create, and edit posts.
 
 ---
 
 ### Initial Setup
 
-#### `socialite init`
+#### `social-light init`
 
-- Creates a JSON config file at `$HOME/.socialite/config.json`
+- Creates a JSON config file at `$HOME/.social-light/config.json`
 - Config includes:
 
   ```json
   {
-    "dbPath": "~/.socialite/socialite.db",
+    "dbPath": "~/.social-light/social-light.db",
     "defaultPlatforms": [],
     "aiEnabled": true
   }
@@ -72,7 +72,7 @@ Local web interface launched with `socialite server` to browse, create, and edit
 
 ### CLI Commands
 
-#### `socialite create`
+#### `social-light create`
 
 Two modes:
 
@@ -91,7 +91,7 @@ Two modes:
 2. **File-based**
 
    ```bash
-   socialite create --file my_post.txt
+   social-light create --file my_post.txt
    ```
 
 AI will infer:
@@ -99,7 +99,7 @@ AI will infer:
 - Title (from content)
 - Date (based on historical post frequency and current date)
 
-#### `socialite unpublished`
+#### `social-light unpublished`
 
 Lists all unpublished posts:
 
@@ -107,7 +107,7 @@ Lists all unpublished posts:
 [index] [date] [title] [truncated content...]
 ```
 
-#### `socialite published`
+#### `social-light published`
 
 Lists published posts:
 
@@ -115,23 +115,23 @@ Lists published posts:
 [index] [date] [title] [truncated content...]
 ```
 
-#### `socialite edit [index]`
+#### `social-light edit [index]`
 
 - Edits a draft post by index
 - Opens `$EDITOR` or prompts inline
 - Title/content/platform/date editable
 
-#### `socialite publish`
+#### `social-light publish`
 
 - Publishes all eligible posts (date <= today)
 - Marks them as `published = true`
 
-#### `socialite publish --continuous`
+#### `social-light publish --continuous`
 
 - Polls continuously (e.g., every 60s)
 - Checks for publishable posts and posts them
 
-#### `socialite server`
+#### `social-light server`
 
 - Launches local web UI
 - React frontend served via Express or Vite backend
@@ -154,7 +154,7 @@ Uses the [`ai`](https://www.npmjs.com/package/ai) npm package (OpenAI wrapper).
 - **CLI:** Node.js, `yargs`, `ora`, `inquirer`, `fs-extra`, `chalk`
 - **AI:** [`ai`](https://www.npmjs.com/package/ai)
 - **DB:** SQLite via `better-sqlite3` or `knex`
-- **Config:** JSON in `$HOME/.socialite/config.json`
+- **Config:** JSON in `$HOME/.social-light/config.json`
 - **Server (optional):** Express + React (via Vite), Tailwind for UI
 - **Scheduler:** Node cron jobs or `setInterval` for continuous mode
 

@@ -65,7 +65,7 @@ const setupApiRoutes = (app) => {
   // Get API info
   app.get("/api", (req, res) => {
     res.json({
-      name: "Socialite API",
+      name: "Social Light API",
       version: "1.0.0",
       endpoints: [
         "/api/posts",

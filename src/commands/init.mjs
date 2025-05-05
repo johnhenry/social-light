@@ -1,10 +1,10 @@
 import chalk from "chalk";
 import ora from "ora";
 import inquirer from "inquirer";
-import fs from 'fs-extra';
-import path from 'path';
-import os from 'os';
-import dotenv from 'dotenv';
+import fs from "fs-extra";
+import path from "path";
+import os from "os";
+import dotenv from "dotenv";
 
 import {
   createDefaultConfig,
@@ -18,13 +18,13 @@ import { initializeDb } from "../utils/db.mjs";
 dotenv.config();
 
 /**
- * Initialize the Socialite application
+ * Initialize the Social Light application
  * @param {Object} argv - Command arguments
  * @example
  * await initialize({ force: true });
  */
 export const initialize = async (argv) => {
-  const spinner = ora("Initializing Socialite...").start();
+  const spinner = ora("Initializing Social Light...").start();
 
   try {
     const exists = configExists();
@@ -38,7 +38,7 @@ export const initialize = async (argv) => {
           type: "confirm",
           name: "confirm",
           message:
-            "Socialite is already initialized. Reinitialize with default settings?",
+            "Social Light is already initialized. Reinitialize with default settings?",
           default: false,
         },
       ]);
@@ -48,7 +48,7 @@ export const initialize = async (argv) => {
         return;
       }
 
-      spinner.start("Reinitializing Socialite...");
+      spinner.start("Reinitializing Social Light...");
     }
 
     // Create default config
@@ -64,33 +64,35 @@ export const initialize = async (argv) => {
 
     // Configure platforms
     spinner.text = "Setting up platforms...";
-    
+
     // Bluesky is the only platform we support
     const platforms = ["Bluesky"];
-    
+
     // Check if we need to collect Bluesky credentials
     spinner.text = "Checking Bluesky credentials...";
     spinner.stop();
-    
+
     // Get existing credentials from .env, if available
-    const blueskyHandle = process.env.BLUESKY_HANDLE || '';
-    const blueskyPassword = process.env.BLUESKY_APP_PASSWORD || '';
-    const blueskyService = process.env.BLUESKY_SERVICE || 'https://bsky.social';
-    
+    const blueskyHandle = process.env.BLUESKY_HANDLE || "";
+    const blueskyPassword = process.env.BLUESKY_APP_PASSWORD || "";
+    const blueskyService = process.env.BLUESKY_SERVICE || "https://bsky.social";
+
     console.log(chalk.cyan("\nBluesky Account Setup"));
-    console.log(chalk.gray("Create an app password in your Bluesky account settings"));
-    
+    console.log(
+      chalk.gray("Create an app password in your Bluesky account settings")
+    );
+
     const { collectCredentials } = await inquirer.prompt([
       {
         type: "confirm",
         name: "collectCredentials",
         message: "Would you like to set up your Bluesky credentials now?",
         default: true,
-      }
+      },
     ]);
-    
+
     let blueskyCredentials = {};
-    
+
     if (collectCredentials) {
       blueskyCredentials = await inquirer.prompt([
         {
@@ -98,87 +100,97 @@ export const initialize = async (argv) => {
           name: "handle",
           message: "Enter your Bluesky handle (username with .bsky.social):",
           default: blueskyHandle,
-          validate: (input) => input.includes('.') ? true : "Handle should include domain (e.g., username.bsky.social)"
+          validate: (input) =>
+            input.includes(".")
+              ? true
+              : "Handle should include domain (e.g., username.bsky.social)",
         },
         {
           type: "password",
           name: "password",
-          message: "Enter your Bluesky app password (created in your Bluesky account settings):",
-          mask: '*',
-          validate: (input) => input.length > 0 ? true : "Password cannot be empty"
+          message:
+            "Enter your Bluesky app password (created in your Bluesky account settings):",
+          mask: "*",
+          validate: (input) =>
+            input.length > 0 ? true : "Password cannot be empty",
         },
         {
           type: "input",
           name: "service",
           message: "Enter your Bluesky service URL:",
-          default: blueskyService
-        }
+          default: blueskyService,
+        },
       ]);
-      
+
       // Save credentials to .env file
-      const envPath = path.join(process.cwd(), '.env');
-      let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
-      
+      const envPath = path.join(process.cwd(), ".env");
+      let envContent = fs.existsSync(envPath)
+        ? fs.readFileSync(envPath, "utf8")
+        : "";
+
       // Parse existing .env content
-      const envLines = envContent.split('\n');
+      const envLines = envContent.split("\n");
       const envMap = {};
-      
-      envLines.forEach(line => {
-        if (line.includes('=')) {
-          const [key, value] = line.split('=');
+
+      envLines.forEach((line) => {
+        if (line.includes("=")) {
+          const [key, value] = line.split("=");
           envMap[key.trim()] = value.trim();
         }
       });
-      
+
       // Update with new credentials
-      envMap['BLUESKY_HANDLE'] = blueskyCredentials.handle;
-      envMap['BLUESKY_APP_PASSWORD'] = blueskyCredentials.password;
-      envMap['BLUESKY_SERVICE'] = blueskyCredentials.service;
-      
+      envMap["BLUESKY_HANDLE"] = blueskyCredentials.handle;
+      envMap["BLUESKY_APP_PASSWORD"] = blueskyCredentials.password;
+      envMap["BLUESKY_SERVICE"] = blueskyCredentials.service;
+
       // Save to config.json as well
-      updateCredentials('bluesky', {
+      updateCredentials("bluesky", {
         handle: blueskyCredentials.handle,
         password: blueskyCredentials.password,
-        service: blueskyCredentials.service
+        service: blueskyCredentials.service,
       });
-      
+
       // If OpenAI key doesn't exist, prompt for it
-      let openaiKey = envMap['OPENAI_API_KEY'] || '';
+      let openaiKey = envMap["OPENAI_API_KEY"] || "";
       if (!openaiKey) {
         const response = await inquirer.prompt([
           {
             type: "input",
             name: "openaiKey",
-            message: "Enter your OpenAI API key for AI features (press Enter to skip):",
-          }
+            message:
+              "Enter your OpenAI API key for AI features (press Enter to skip):",
+          },
         ]);
-        
+
         if (response.openaiKey) {
           openaiKey = response.openaiKey;
-          envMap['OPENAI_API_KEY'] = openaiKey;
+          envMap["OPENAI_API_KEY"] = openaiKey;
         }
       }
-      
+
       // Save OpenAI key to config.json
       if (openaiKey) {
-        updateCredentials('openai', {
-          apiKey: openaiKey
+        updateCredentials("openai", {
+          apiKey: openaiKey,
         });
       }
-      
+
       // Convert map back to env string
       const newEnvContent = Object.entries(envMap)
         .map(([key, value]) => `${key}=${value}`)
-        .join('\n');
-      
+        .join("\n");
+
       // Write to .env file
       fs.writeFileSync(envPath, newEnvContent);
-      
-      console.log(chalk.green("\n✓ Credentials saved to .env file and config.json"));
+
+      console.log(
+        chalk.green("\n✓ Credentials saved to .env file and config.json")
+      );
     }
-    
+
     spinner.start("Updating configuration...");
-    
+
     // Update config with selected platforms
     updateConfig({ defaultPlatforms: platforms });
 
@@ -186,7 +198,7 @@ export const initialize = async (argv) => {
     spinner.text = "Setting up database...";
     initializeDb();
 
-    spinner.succeed("Socialite initialized successfully!");
+    spinner.succeed("Social Light initialized successfully!");
 
     // Display configuration summary
     console.log("\n", chalk.cyan("Configuration:"));
@@ -203,14 +215,17 @@ export const initialize = async (argv) => {
         config.aiEnabled ? chalk.green("Enabled") : chalk.red("Disabled")
       }`
     );
-    
+
     // Display credentials info
-    const hasOpenAI = Boolean(process.env.OPENAI_API_KEY || config.credentials?.openai?.apiKey);
-    const hasBluesky = Boolean(
-      (process.env.BLUESKY_HANDLE && process.env.BLUESKY_APP_PASSWORD) || 
-      (config.credentials?.bluesky?.handle && config.credentials?.bluesky?.password)
+    const hasOpenAI = Boolean(
+      process.env.OPENAI_API_KEY || config.credentials?.openai?.apiKey
     );
-    
+    const hasBluesky = Boolean(
+      (process.env.BLUESKY_HANDLE && process.env.BLUESKY_APP_PASSWORD) ||
+        (config.credentials?.bluesky?.handle &&
+          config.credentials?.bluesky?.password)
+    );
+
     console.log("\n", chalk.cyan("Credentials:"));
     console.log(
       ` ${chalk.gray("•")} ${chalk.bold("OpenAI API:")} ${
@@ -227,9 +242,12 @@ export const initialize = async (argv) => {
       "\n",
       chalk.green("✓"),
       "You're all set! Get started with",
-      chalk.cyan("socialite create")
+      chalk.cyan("social-light create")
     );
-    console.log(chalk.gray("  Need help? Run"), chalk.cyan("socialite --help"));
+    console.log(
+      chalk.gray("  Need help? Run"),
+      chalk.cyan("social-light --help")
+    );
   } catch (error) {
     spinner.fail(`Initialization failed: ${error.message}`);
     console.error(chalk.red("Error details:"), error);

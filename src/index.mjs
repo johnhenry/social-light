@@ -20,13 +20,14 @@ import { startServer } from "./server/index.mjs";
 const displayBanner = () => {
   console.log(
     chalk.cyan(`
-   _____            _       _ _ _       
-  / ____|          (_)     | (_) |      
- | (___   ___   ___ _  __ _| |_| |_ ___ 
-  \\___ \\ / _ \\ / __| |/ _\` | | | __/ _ \\
-  ____) | (_) | (__| | (_| | | | ||  __/
- |_____/ \\___/ \\___|_|\\__,_|_|_|\\__\\___|
-                                        
+   _____  ____   _____ _____          _        _      _____ _____ _    _ _______
+  / ____|/ __ \ / ____|_   _|   /\   | |      | |    |_   _/ ____| |  | |__   __|
+ | (___ | |  | | |      | |    /  \  | |      | |      | || |  __| |__| |  | |   
+  \___ \| |  | | |      | |   / /\ \ | |      | |      | || | |_ |  __  |  | |   
+  ____) | |__| | |____ _| |_ / ____ \| |____  | |____ _| || |__| | |  | |  | |   
+ |_____/ \____/ \_____|_____/_/    \_\______| |______|_____\_____|_|  |_|  |_|   
+                                                                               
+
  `)
   );
   console.log(chalk.gray("AI-powered social media scheduler\n"));
@@ -36,7 +37,7 @@ const main = async () => {
   displayBanner();
 
   yargs(hideBin(process.argv))
-    .command("init", "Initialize Socialite configuration", {}, initialize)
+    .command("init", "Initialize Social Light configuration", {}, initialize)
     .command(
       "create",
       "Create a new social media post",

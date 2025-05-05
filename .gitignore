@@ -47,4 +47,4 @@ coverage/
 .nyc_output/
 
 # Local application data
-.socialite/
+.social-light/

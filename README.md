@@ -1,4 +1,6 @@
-# Socialite
+# Social Light
+
+<img src="https://raw.githubusercontent.com/johnhenry/spintax/main/src/server/client/logo.jpg" alt="social light logo" style="width:256px; height:256px">
 
 An AI-powered social media scheduling tool for Bluesky with CLI and web interface.
 
@@ -15,8 +17,8 @@ An AI-powered social media scheduling tool for Bluesky with CLI and web interfac
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/socialite.git
-cd socialite
+git clone https://github.com/yourusername/social-light.git
+cd social-light
 
 # Install dependencies
 npm install
@@ -28,13 +30,14 @@ npm link
 
 ## API Configuration
 
-To use Socialite with Bluesky, you need to set up your credentials:
+To use social-light with Bluesky, you need to set up your credentials:
 
-1. Create a `.env` file in the project root or complete the prompts during `socialite init`
+1. Create a `.env` file in the project root or complete the prompts during `social-light init`
 2. Add your credentials following the format in `.env.example`
 3. See `API_SETUP.md` for detailed instructions on obtaining credentials
 
 Example:
+
 ```
 # OpenAI API for AI features
 OPENAI_API_KEY=your_openai_api_key
@@ -47,25 +50,27 @@ BLUESKY_SERVICE=https://bsky.social
 
 ## CLI Usage
 
-### Initialize Socialite
+### Initialize social-light
 
 ```bash
-socialite init
+social-light init
 ```
 
 This will:
-- Create a configuration file at `~/.socialite/config.json`
-- Initialize a SQLite database at `~/.socialite/socialite.db`
+
+- Create a configuration file at `~/.social-light/config.json`
+- Initialize a SQLite database at `~/.social-light/social-light.db`
 - Set up Bluesky as the default platform
 - Collect your Bluesky credentials
 
 ### Create a Post
 
 ```bash
-socialite create
+social-light create
 ```
 
 This will guide you through creating a new post with:
+
 - Interactive content editor
 - AI-powered title suggestions
 - Smart publish date recommendations
@@ -75,38 +80,39 @@ This will guide you through creating a new post with:
 
 ```bash
 # List unpublished posts
-socialite unpublished
+social-light unpublished
 
 # List published posts
-socialite published
+social-light published
 
 # Edit a post by index
-socialite edit 1
+social-light edit 1
 ```
 
 ### Publish Posts
 
 ```bash
 # Publish all eligible posts
-socialite publish
+social-light publish
 
 # Run in continuous mode (daemon)
-socialite publish --continuous
+social-light publish --continuous
 ```
 
 ### Web Interface
 
 ```bash
 # Start the web server
-socialite server
+social-light server
 
 # Specify a custom port
-socialite server --port 8080
+social-light server --port 8080
 ```
 
 ## Web Interface
 
 The web interface provides a visual way to:
+
 - View all your scheduled and published posts
 - Create and edit posts with a rich text editor
 - See a calendar view of your posting schedule
@@ -116,13 +122,13 @@ Access the web interface at `http://localhost:3000` (or your specified port) aft
 
 ## Configuration
 
-Configuration is stored in `~/.socialite/config.json` and can be modified directly or through the initialization process.
+Configuration is stored in `~/.social-light/config.json` and can be modified directly or through the initialization process.
 
 ### Example Config
 
 ```json
 {
-  "dbPath": "~/.socialite/socialite.db",
+  "dbPath": "~/.social-light/social-light.db",
   "defaultPlatforms": ["Bluesky"],
   "aiEnabled": true
 }
@@ -133,6 +139,7 @@ Configuration is stored in `~/.socialite/config.json` and can be modified direct
 To publish to Bluesky, you'll need to set up your credentials:
 
 #### Bluesky
+
 - Create a Bluesky account if you don't have one
 - Generate an app password in your account settings
 - Add these to your environment variables:
@@ -151,6 +158,7 @@ OPENAI_API_KEY=your_openai_api_key
 ```
 
 AI features include:
+
 - Title generation based on post content
 - Smart publish date suggestions based on your posting history
 - Content enhancement for platform-specific optimization
@@ -160,7 +168,7 @@ AI features include:
 ### Project Structure
 
 ```
-socialite/
+social-light/
 ├── src/
 │   ├── commands/        # CLI command implementations
 │   ├── utils/           # Utility modules
