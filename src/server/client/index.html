@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socialite - Social Media Scheduler</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Add system font stack as specified in user preferences -->
+  <style>
+    :root {
+      --color-bg-dark: #1a1a1c;
+      --color-bg-card: #27272a;
+      --color-bg-code: #232334;
+      --color-text-primary: #e9e9ea;
+      --color-text-secondary: #a1a1a8;
+      --color-accent-primary: #8c7ae6;
+      --color-accent-primary-hover: #a192ea;
+      --color-accent-action: #e67e22;
+      --color-accent-action-hover: #f39c12;
+      --color-accent-danger: #e25f73;
+      --color-border: #393941;
+      --border-radius: 8px;
+      --padding-card: 20px;
+      --padding-section: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- App will be mounted here -->
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Loading Socialite...</p>
+    </div>
+  </div>
+  
+  <!-- Script will be injected by server in production -->
+  <script type="module" src="main.mjs"></script>
+</body>
+</html>

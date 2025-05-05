@@ -1,0 +1,210 @@
+import fs from 'fs-extra';
+import path from 'path';
+import os from 'os';
+import Database from 'better-sqlite3';
+import { getConfig } from './config.mjs';
+
+/**
+ * Get database connection
+ * @returns {Object} Database connection
+ * @example
+ * const db = getDb();
+ * const posts = db.prepare('SELECT * FROM posts').all();
+ */
+export const getDb = () => {
+  const config = getConfig();
+  
+  // Resolve path with home directory if needed
+  const dbPath = config.dbPath.replace(/^~/, os.homedir());
+  
+  // Ensure directory exists
+  fs.ensureDirSync(path.dirname(dbPath));
+  
+  // Connect to database
+  const db = new Database(dbPath);
+  
+  return db;
+};
+
+/**
+ * Initialize database schema
+ * @returns {boolean} True if successful
+ * @example
+ * const success = initializeDb();
+ */
+export const initializeDb = () => {
+  const db = getDb();
+  
+  // Create posts table if it doesn't exist
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS posts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT,
+      content TEXT NOT NULL,
+      platforms TEXT,
+      publish_date TEXT,
+      published INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      action TEXT NOT NULL,
+      details TEXT,
+      timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  
+  return true;
+};
+
+/**
+ * Get all posts with optional filters
+ * @param {Object} filters - Query filters
+ * @param {boolean} filters.published - Filter by published status
+ * @returns {Array} Array of post objects
+ * @example
+ * const unpublishedPosts = getPosts({ published: false });
+ */
+export const getPosts = (filters = {}) => {
+  const db = getDb();
+  
+  let query = 'SELECT * FROM posts';
+  const params = [];
+  
+  // Apply filters
+  if (filters.published !== undefined) {
+    query += ' WHERE published = ?';
+    params.push(Number(filters.published));
+  }
+  
+  // Add ordering
+  query += ' ORDER BY publish_date ASC';
+  
+  return db.prepare(query).all(...params);
+};
+
+/**
+ * Get a single post by ID
+ * @param {number} id - Post ID
+ * @returns {Object|null} Post object or null if not found
+ * @example
+ * const post = getPostById(1);
+ */
+export const getPostById = (id) => {
+  const db = getDb();
+  return db.prepare('SELECT * FROM posts WHERE id = ?').get(id);
+};
+
+/**
+ * Create a new post
+ * @param {Object} post - Post object
+ * @returns {number} ID of the created post
+ * @example
+ * const postId = createPost({
+ *   title: 'My first post',
+ *   content: 'Hello world!',
+ *   platforms: 'Twitter,Bluesky',
+ *   publish_date: '2023-01-01'
+ * });
+ */
+export const createPost = (post) => {
+  const db = getDb();
+  
+  const { title, content, platforms, publish_date } = post;
+  
+  const result = db.prepare(`
+    INSERT INTO posts (title, content, platforms, publish_date)
+    VALUES (?, ?, ?, ?)
+  `).run(title, content, platforms, publish_date);
+  
+  return result.lastInsertRowid;
+};
+
+/**
+ * Update an existing post
+ * @param {number} id - Post ID
+ * @param {Object} updates - Fields to update
+ * @returns {boolean} True if successful
+ * @example
+ * const success = updatePost(1, {
+ *   title: 'Updated title',
+ *   content: 'Updated content'
+ * });
+ */
+export const updatePost = (id, updates) => {
+  const db = getDb();
+  
+  // Build update query dynamically
+  const fields = Object.keys(updates).filter(field => 
+    ['title', 'content', 'platforms', 'publish_date', 'published'].includes(field)
+  );
+  
+  if (fields.length === 0) return false;
+  
+  const setClause = fields.map(field => `${field} = ?`).join(', ');
+  const params = fields.map(field => updates[field]);
+  
+  // Add updated_at
+  const query = `
+    UPDATE posts
+    SET ${setClause}, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `;
+  
+  params.push(id);
+  
+  const result = db.prepare(query).run(...params);
+  return result.changes > 0;
+};
+
+/**
+ * Mark posts as published
+ * @param {Array|number} ids - Post ID or array of post IDs
+ * @returns {number} Number of posts updated
+ * @example
+ * const count = markAsPublished([1, 2, 3]);
+ */
+export const markAsPublished = (ids) => {
+  const db = getDb();
+  
+  if (!Array.isArray(ids)) {
+    ids = [ids];
+  }
+  
+  let totalChanges = 0;
+  
+  // Use a transaction for bulk updates
+  const updateStmt = db.prepare(`
+    UPDATE posts
+    SET published = 1, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `);
+  
+  const transaction = db.transaction((postIds) => {
+    for (const id of postIds) {
+      const result = updateStmt.run(id);
+      totalChanges += result.changes;
+    }
+    return totalChanges;
+  });
+  
+  return transaction(ids);
+};
+
+/**
+ * Log an action to the database
+ * @param {string} action - Action name
+ * @param {Object} details - Additional details (will be JSON.stringified)
+ * @example
+ * logAction('post_created', { postId: 1, platforms: ['Twitter'] });
+ */
+export const logAction = (action, details = {}) => {
+  const db = getDb();
+  
+  db.prepare(`
+    INSERT INTO logs (action, details)
+    VALUES (?, ?)
+  `).run(action, JSON.stringify(details));
+};
