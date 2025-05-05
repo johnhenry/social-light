@@ -2,7 +2,7 @@
 
 <img src="https://raw.githubusercontent.com/johnhenry/spintax/main/src/server/client/logo.jpg" alt="social light logo" style="width:256px; height:256px">
 
-An AI-powered social media scheduling tool for Bluesky with CLI and web interface.
+An AI-powered social media scheduling tool for Bluesky with CLI and web interface. More platforms coming soon!
 
 ## Features
 
@@ -13,7 +13,28 @@ An AI-powered social media scheduling tool for Bluesky with CLI and web interfac
 - **Scheduling**: Schedule posts ahead of time with smart AI date suggestions
 - **Continuous Publishing**: Run in daemon mode to automatically publish scheduled posts
 
+## Prerequesites
+
+### Software
+
+[Node.js/npm](https://nodejs.org) must be installed on your system
+
+> [!WARNING]  
+> There's a know issues with the latest version of Node.js (v23) and 'better-sqlite3'. Please use Node.js v22 (LTS) or lower.
+
+## Accounts
+
+You will need an account on [blue sky](https://bsky.app) and an [OpenAI](https://openai.com) account to use the AI features.
+
 ## Installation
+
+### From NPM
+
+```bash
+npm install -g social-light
+```
+
+### From Source
 
 ```bash
 # Clone the repository
@@ -28,26 +49,6 @@ chmod +x src/index.mjs
 npm link
 ```
 
-## API Configuration
-
-To use social-light with Bluesky, you need to set up your credentials:
-
-1. Create a `.env` file in the project root or complete the prompts during `social-light init`
-2. Add your credentials following the format in `.env.example`
-3. See `API_SETUP.md` for detailed instructions on obtaining credentials
-
-Example:
-
-```
-# OpenAI API for AI features
-OPENAI_API_KEY=your_openai_api_key
-
-# Bluesky credentials
-BLUESKY_HANDLE=your_handle.bsky.social
-BLUESKY_APP_PASSWORD=your_bluesky_app_password
-BLUESKY_SERVICE=https://bsky.social
-```
-
 ## CLI Usage
 
 ### Initialize social-light
@@ -60,8 +61,8 @@ This will:
 
 - Create a configuration file at `~/.social-light/config.json`
 - Initialize a SQLite database at `~/.social-light/social-light.db`
-- Set up Bluesky as the default platform
 - Collect your Bluesky credentials
+- Collect your Open AI credentials
 
 ### Create a Post
 
@@ -101,6 +102,10 @@ social-light publish --continuous
 
 ### Web Interface
 
+Open the web interface to manage post visually
+
+<img src="https://raw.githubusercontent.com/johnhenry/spintax/main/server.png" alt="server" style="width:256px; height:256px">
+
 ```bash
 # Start the web server
 social-light server
@@ -139,15 +144,6 @@ Configuration is stored in `~/.social-light/config.json` and can be modified dir
 To publish to Bluesky, you'll need to set up your credentials:
 
 #### Bluesky
-
-- Create a Bluesky account if you don't have one
-- Generate an app password in your account settings
-- Add these to your environment variables:
-  ```
-  BLUESKY_HANDLE=your_handle.bsky.social
-  BLUESKY_APP_PASSWORD=your_app_password
-  BLUESKY_SERVICE=https://bsky.social
-  ```
 
 ## AI Features
 

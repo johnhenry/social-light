@@ -3,6 +3,7 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import chalk from "chalk";
+import { exec } from "child_process";
 import {
   getPosts,
   getPostById,
@@ -29,6 +30,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const startServer = async (argv) => {
   const app = express();
   const port = argv.port || 3000;
+  const shouldOpen = !argv.noOpen; // Open by default, disabled with --no-open
 
   // Middleware
   app.use(cors());
@@ -47,13 +49,40 @@ export const startServer = async (argv) => {
 
   // Start server
   app.listen(port, () => {
+    const url = `http://localhost:${port}`;
     console.log(chalk.green(`✓ Server started on port ${port}`));
     console.log(
       chalk.cyan(
-        `Open http://localhost:${port} in your browser to access the web interface`
+        `Opening ${url} in your browser...`
       )
     );
     console.log(chalk.gray("Press Ctrl+C to stop the server"));
+    
+    // Open URL in default browser if not disabled
+    if (shouldOpen) {
+      // Open URL in default browser based on platform
+      let command;
+      switch (process.platform) {
+        case 'darwin': // macOS
+          command = `open ${url}`;
+          break;
+        case 'win32': // Windows
+          command = `start ${url}`;
+          break;
+        default: // Linux and others
+          command = `xdg-open ${url}`;
+      }
+      
+      // Execute the command to open the browser
+      exec(command, (error) => {
+        if (error) {
+          console.error(chalk.yellow(`Unable to open browser automatically: ${error.message}`));
+          console.log(chalk.cyan(`Open ${url} in your browser to access the web interface`));
+        }
+      });
+    } else {
+      console.log(chalk.cyan(`Open ${url} in your browser to access the web interface`));
+    }
   });
 };
 

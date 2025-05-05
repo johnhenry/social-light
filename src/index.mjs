@@ -86,6 +86,11 @@ const main = async () => {
           type: "number",
           default: 3000,
         },
+        "no-open": {
+          describe: "Disable automatically opening the browser",
+          type: "boolean",
+          default: false,
+        },
       },
       startServer
     )
