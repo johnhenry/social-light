@@ -5,8 +5,18 @@ import os from 'os';
 // Default configuration
 const defaultConfig = {
   dbPath: '~/.socialite/socialite.db',
-  defaultPlatforms: [],
-  aiEnabled: true
+  defaultPlatforms: ['Bluesky'],
+  aiEnabled: true,
+  credentials: {
+    openai: {
+      apiKey: ''
+    },
+    bluesky: {
+      handle: '',
+      password: '',
+      service: 'https://bsky.social'
+    }
+  }
 };
 
 /**
@@ -74,4 +84,44 @@ export const updateConfig = (updates) => {
   fs.writeJsonSync(getConfigPath(), newConfig, { spaces: 2 });
   
   return newConfig;
+};
+
+/**
+ * Get credentials from config
+ * @param {string} platform - Platform name (e.g., 'bluesky', 'openai')
+ * @returns {Object} Credentials object
+ * @example
+ * const blueskyCredentials = getCredentials('bluesky');
+ */
+export const getCredentials = (platform) => {
+  const config = getConfig();
+  return config.credentials?.[platform.toLowerCase()] || {};
+};
+
+/**
+ * Update credentials in config
+ * @param {string} platform - Platform name (e.g., 'bluesky', 'openai')
+ * @param {Object} credentials - Credentials object
+ * @returns {Object} Updated config
+ * @example
+ * const updatedConfig = updateCredentials('bluesky', { handle: 'user.bsky.social', password: 'apppassword' });
+ */
+export const updateCredentials = (platform, credentials) => {
+  const config = getConfig();
+  
+  // Ensure credentials object exists
+  if (!config.credentials) {
+    config.credentials = {};
+  }
+  
+  // Update credentials for the platform
+  config.credentials[platform.toLowerCase()] = {
+    ...config.credentials[platform.toLowerCase()],
+    ...credentials
+  };
+  
+  // Save updated config
+  fs.writeJsonSync(getConfigPath(), config, { spaces: 2 });
+  
+  return config;
 };

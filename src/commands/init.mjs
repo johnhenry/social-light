@@ -10,6 +10,7 @@ import {
   createDefaultConfig,
   configExists,
   updateConfig,
+  updateCredentials,
 } from "../utils/config.mjs";
 import { initializeDb } from "../utils/db.mjs";
 
@@ -134,9 +135,17 @@ export const initialize = async (argv) => {
       envMap['BLUESKY_APP_PASSWORD'] = blueskyCredentials.password;
       envMap['BLUESKY_SERVICE'] = blueskyCredentials.service;
       
+      // Save to config.json as well
+      updateCredentials('bluesky', {
+        handle: blueskyCredentials.handle,
+        password: blueskyCredentials.password,
+        service: blueskyCredentials.service
+      });
+      
       // If OpenAI key doesn't exist, prompt for it
-      if (!envMap['OPENAI_API_KEY']) {
-        const { openaiKey } = await inquirer.prompt([
+      let openaiKey = envMap['OPENAI_API_KEY'] || '';
+      if (!openaiKey) {
+        const response = await inquirer.prompt([
           {
             type: "input",
             name: "openaiKey",
@@ -144,9 +153,17 @@ export const initialize = async (argv) => {
           }
         ]);
         
-        if (openaiKey) {
+        if (response.openaiKey) {
+          openaiKey = response.openaiKey;
           envMap['OPENAI_API_KEY'] = openaiKey;
         }
+      }
+      
+      // Save OpenAI key to config.json
+      if (openaiKey) {
+        updateCredentials('openai', {
+          apiKey: openaiKey
+        });
       }
       
       // Convert map back to env string
@@ -157,7 +174,7 @@ export const initialize = async (argv) => {
       // Write to .env file
       fs.writeFileSync(envPath, newEnvContent);
       
-      console.log(chalk.green("\n✓ Credentials saved to .env file"));
+      console.log(chalk.green("\n✓ Credentials saved to .env file and config.json"));
     }
     
     spinner.start("Updating configuration...");
@@ -184,6 +201,25 @@ export const initialize = async (argv) => {
     console.log(
       ` ${chalk.gray("•")} ${chalk.bold("AI features:")} ${
         config.aiEnabled ? chalk.green("Enabled") : chalk.red("Disabled")
+      }`
+    );
+    
+    // Display credentials info
+    const hasOpenAI = Boolean(process.env.OPENAI_API_KEY || config.credentials?.openai?.apiKey);
+    const hasBluesky = Boolean(
+      (process.env.BLUESKY_HANDLE && process.env.BLUESKY_APP_PASSWORD) || 
+      (config.credentials?.bluesky?.handle && config.credentials?.bluesky?.password)
+    );
+    
+    console.log("\n", chalk.cyan("Credentials:"));
+    console.log(
+      ` ${chalk.gray("•")} ${chalk.bold("OpenAI API:")} ${
+        hasOpenAI ? chalk.green("Configured") : chalk.yellow("Not configured")
+      }`
+    );
+    console.log(
+      ` ${chalk.gray("•")} ${chalk.bold("Bluesky:")} ${
+        hasBluesky ? chalk.green("Configured") : chalk.yellow("Not configured")
       }`
     );
 

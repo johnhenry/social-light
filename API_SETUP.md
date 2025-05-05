@@ -4,7 +4,12 @@ To use Socialite with Bluesky, you need to set up the appropriate credentials. T
 
 ## Setting Up Environment Variables
 
-Socialite uses environment variables to securely store your API credentials. You can set these up in a `.env` file in the project root or through the initialization process:
+Socialite stores your API credentials in two locations for flexibility:
+
+1. `.env` file: Traditional environment variables for compatibility
+2. `~/.socialite/config.json`: Secure local storage as part of your user configuration
+
+You can set up these credentials in either location, or preferably through the `socialite init` process which handles both:
 
 1. Create a file named `.env` in the root of the Socialite project (or let the `socialite init` command create it for you)
 2. Add your credentials using the format below
@@ -49,10 +54,13 @@ BLUESKY_SERVICE=https://bsky.social
 
 After setting up your credentials, you can verify that they're working:
 
-1. Run `socialite init` if you haven't already
-2. Try creating and publishing a post to test the connection
+1. Run `socialite init` if you haven't already - this will confirm that your credentials are properly configured
+2. Check both storage locations to ensure credentials are properly saved:
+   - `.env` file in the project root
+   - `~/.socialite/config.json` for your user configuration
+3. Try creating and publishing a post to test the connection with `socialite create`
 
-If you encounter authentication errors, double-check your credentials and make sure they're correctly entered.
+If you encounter authentication errors, check both storage locations and make sure your credentials are correctly entered. The application will check both locations when authenticating.
 
 ## Troubleshooting
 

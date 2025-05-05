@@ -26,10 +26,19 @@ export class BlueskyPlatform extends SocialPlatform {
    * @returns {boolean} True if platform is configured
    */
   isConfigured() {
-    return Boolean(
+    // Check config for credentials
+    const hasConfigCreds = Boolean(
       this.config.handle &&
       this.config.password
     );
+
+    // Also check environment variables
+    const hasEnvCreds = Boolean(
+      process.env.BLUESKY_HANDLE &&
+      process.env.BLUESKY_APP_PASSWORD
+    );
+
+    return hasConfigCreds || hasEnvCreds;
   }
 
   /**
@@ -41,15 +50,20 @@ export class BlueskyPlatform extends SocialPlatform {
       throw new Error('Bluesky API not properly configured');
     }
 
+    // Get credentials from config or environment variables
+    const handle = this.config.handle || process.env.BLUESKY_HANDLE;
+    const password = this.config.password || process.env.BLUESKY_APP_PASSWORD;
+    const service = this.config.service || process.env.BLUESKY_SERVICE || this.service;
+
     try {
-      const response = await fetch(`${this.service}/xrpc/com.atproto.server.createSession`, {
+      const response = await fetch(`${service}/xrpc/com.atproto.server.createSession`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          identifier: this.config.handle,
-          password: this.config.password
+          identifier: handle,
+          password: password
         })
       });
 

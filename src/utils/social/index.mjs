@@ -1,5 +1,5 @@
 import { PlatformFactory } from "./base.mjs";
-import { getConfig } from "../config.mjs";
+import { getConfig, getCredentials } from "../config.mjs";
 import { logAction } from "../db.mjs";
 import dotenv from 'dotenv';
 
@@ -28,8 +28,17 @@ export class SocialAPI {
    */
   async initPlatform(platform, config = {}) {
     try {
+      // Get credentials from config.json
+      const platformCredentials = getCredentials(platform);
+      
+      // Merge provided config and stored credentials
+      const mergedConfig = {
+        ...platformCredentials,
+        ...config
+      };
+      
       // Get platform instance from factory
-      const platformInstance = await PlatformFactory.create(platform, config);
+      const platformInstance = await PlatformFactory.create(platform, mergedConfig);
 
       // Store the platform instance
       this.platforms.set(platform.toLowerCase(), platformInstance);
