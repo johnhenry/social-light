@@ -100,6 +100,16 @@ social-light publish
 social-light publish --continuous
 ```
 
+### Clean Posts
+
+```bash
+# Clean all published posts
+social-light clean
+
+# Clean all posts (including unpublished)
+social-light clean --unpublished
+```
+
 ### Web Interface
 
 Open the web interface to manage post visually

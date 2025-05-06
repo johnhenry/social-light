@@ -14,6 +14,7 @@ import { listUnpublished } from "./commands/unpublished.mjs";
 import { listPublished } from "./commands/published.mjs";
 import { editPost } from "./commands/edit.mjs";
 import { publishPosts } from "./commands/publish.mjs";
+import { cleanPosts } from "./commands/clean.mjs";
 import { startServer } from "./server/index.mjs";
 
 // Application title banner
@@ -25,7 +26,7 @@ const displayBanner = () => {
  | (___ | |  | | |      | |    /  \  | |      | |      | || |  __| |__| |  | |   
   \___ \| |  | | |      | |   / /\ \ | |      | |      | || | |_ |  __  |  | |   
   ____) | |__| | |____ _| |_ / ____ \| |____  | |____ _| || |__| | |  | |  | |   
- |_____/ \____/ \_____|_____/_/    \_\______| |______|_____\_____|_|  |_|  |_|   
+ |_____/ \____/ \_____|_____/_/    \_\______| |______|_____\_____|_|  |_|  |_|
                                                                                
 
  `)
@@ -93,6 +94,25 @@ const main = async () => {
         },
       },
       startServer
+    )
+    .command(
+      "clean",
+      "Remove posts from the database",
+      {
+        published: {
+          alias: "p",
+          describe: "Just remove published posts",
+          type: "boolean",
+          default: true,
+        },
+        unpublished: {
+          alias: "u",
+          describe: "Just remove unpublished posts",
+          type: "boolean",
+          default: false,
+        },
+      },
+      cleanPosts
     )
     .demandCommand(1, "Please specify a command")
     .help().argv;

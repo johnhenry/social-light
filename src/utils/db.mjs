@@ -1,3 +1,4 @@
+
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
@@ -257,4 +258,61 @@ export const logAction = (action, details = {}) => {
     INSERT INTO logs (action, details)
     VALUES (?, ?)
   `).run(action, JSON.stringify(details));
+};
+
+/**
+ * Delete posts by published status
+ * @param {Object} options - Options for deletion
+ * @param {boolean} options.published - Whether to delete published posts
+ * @param {boolean} options.unpublished - Whether to delete unpublished posts
+ * @returns {Object} Counts of deleted posts by type
+ * @example
+ * const result = deletePosts({ published: true }); // Delete only published posts
+ * const result = deletePosts({ unpublished: true }); // Delete only unpublished posts
+ * const result = deletePosts({ published: true, unpublished: true }); // Delete all posts
+ */
+export const deletePosts = (options = { published: true }) => {
+  const db = getDb();
+  const result = { published: 0, unpublished: 0, total: 0 };
+  
+  try {
+    // Delete published posts if requested
+    if (options.published) {
+      // Get count of published posts
+      const publishedCountQuery = db.prepare("SELECT COUNT(*) as count FROM posts WHERE published = 1");
+      const publishedCountResult = publishedCountQuery.get();
+      result.published = publishedCountResult ? publishedCountResult.count : 0;
+      
+      // Delete published posts
+      const deletePublishedQuery = db.prepare("DELETE FROM posts WHERE published = 1");
+      deletePublishedQuery.run();
+    }
+    
+    // Delete unpublished posts if requested
+    if (options.unpublished) {
+      // Get count of unpublished posts
+      const unpublishedCountQuery = db.prepare("SELECT COUNT(*) as count FROM posts WHERE published = 0");
+      const unpublishedCountResult = unpublishedCountQuery.get();
+      result.unpublished = unpublishedCountResult ? unpublishedCountResult.count : 0;
+      
+      // Delete unpublished posts
+      const deleteUnpublishedQuery = db.prepare("DELETE FROM posts WHERE published = 0");
+      deleteUnpublishedQuery.run();
+    }
+    
+    // Calculate total
+    result.total = result.published + result.unpublished;
+    
+    // Log the action
+    logAction('posts_cleaned', { 
+      published: result.published,
+      unpublished: result.unpublished,
+      total: result.total
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Error deleting posts:', error.message);
+    throw error;
+  }
 };
