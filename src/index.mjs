@@ -37,7 +37,7 @@ const main = async () => {
     .parserConfiguration({
       'boolean-negation': true
     })
-    .command("version", "Initialize Social Light configuration", {}, () => {
+    .command("version", "Social Light version", {}, () => {
       console.log(NPMPackage.version);
     })
     .command("init", "Initialize Social Light configuration", {}, initialize)
@@ -74,7 +74,7 @@ const main = async () => {
     )
     .command(
       "edit [index]",
-      "Edit a draft post by index",
+      "Edit an unpublished post by index",
       {
         index: {
           describe: "Index of the post to edit",
@@ -85,7 +85,7 @@ const main = async () => {
     )
     .command(
       "publish",
-      "Publish eligible posts",
+      "Publish unpublished posts",
       {
         continuous: {
           alias: "c",
