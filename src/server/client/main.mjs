@@ -381,7 +381,7 @@ const renderPostEditor = () => {
             state.config.aiEnabled && platformOptions.length > 0
               ? `
             <div class="d-flex justify-end mt-sm">
-              <button type="button" class="btn" id="enhance-content-btn">Enhance with AI</button>
+              <button type="button" class="btn" id="enhance-content-btn">Enhance with for Provider AI</button>
             </div>
           `
               : ""

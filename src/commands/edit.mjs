@@ -179,7 +179,7 @@ export const editPost = async (argv) => {
       console.log(chalk.green("\n✓ Post updated successfully!"));
       console.log(
         chalk.gray("Run"),
-        chalk.cyan("social-light unpublished"),
+        chalk.cyan("social-light list"),
         chalk.gray("to see your updated post.")
       );
       console.log(

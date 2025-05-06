@@ -1,8 +1,9 @@
-#!/usr/bin/env node --no-deprecation
+#!/usr/bin/env node --no-warnings
 
 // Load environment variables from .env file
 import { config } from "dotenv";
 config();
+import NPMPackage from "../package.json" with { type: "json" };
 
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
@@ -10,8 +11,8 @@ import chalk from "chalk";
 
 import { initialize } from "./commands/init.mjs";
 import { createPost } from "./commands/create.mjs";
-import { listUnpublished } from "./commands/unpublished.mjs";
-import { listPublished } from "./commands/published.mjs";
+
+import { list } from "./commands/list.mjs";
 import { editPost } from "./commands/edit.mjs";
 import { publishPosts } from "./commands/publish.mjs";
 import { cleanPosts } from "./commands/clean.mjs";
@@ -20,24 +21,25 @@ import { startServer } from "./server/index.mjs";
 // Application title banner
 const displayBanner = () => {
   console.log(
-    chalk.cyan(`
+chalk.cyan(`
    _____  ____   _____ _____          _        _      _____ _____ _    _ _______
-  / ____|/ __ \ / ____|_   _|   /\   | |      | |    |_   _/ ____| |  | |__   __|
- | (___ | |  | | |      | |    /  \  | |      | |      | || |  __| |__| |  | |   
-  \___ \| |  | | |      | |   / /\ \ | |      | |      | || | |_ |  __  |  | |   
-  ____) | |__| | |____ _| |_ / ____ \| |____  | |____ _| || |__| | |  | |  | |   
- |_____/ \____/ \_____|_____/_/    \_\______| |______|_____\_____|_|  |_|  |_|
-                                                                               
-
- `)
+  / ____|/ __ \\ / ____|_   _|   /\\   | |      | |    |_   _/ ____| |  | |__   __|
+ | (___ | |  | || |      | |   /  \\  | |  __  | |      | || |  __| |__| |  | |
+  \\___ \\| |  | || |      | |  / /\\ \\ | |      | |      | || | |_ |  __  |  | |
+  ____) | |__| || |____ _| |_/ ____ \\| |_____ | |____ _| || |__| | |  | |  | |
+ |_____/ \\____/ \\_____|_____/_/   \\__\\\\______||______|_____\\_____|_|  |_|  |_|
+`)
   );
   console.log(chalk.gray("AI-powered social media scheduler\n"));
 };
-
 const main = async () => {
-  displayBanner();
-
   yargs(hideBin(process.argv))
+    .parserConfiguration({
+      'boolean-negation': true
+    })
+    .command("version", "Initialize Social Light configuration", {}, () => {
+      console.log(NPMPackage.version);
+    })
     .command("init", "Initialize Social Light configuration", {}, initialize)
     .command(
       "create",
@@ -51,8 +53,25 @@ const main = async () => {
       },
       createPost
     )
-    .command("unpublished", "List all unpublished posts", {}, listUnpublished)
-    .command("published", "List all published posts", {}, listPublished)
+    .command(
+      "list",
+      "List posts",
+      {
+        published: {
+          alias: "p",
+          describe: "List published posts",
+          type: "boolean",
+          default: false,
+        },
+        unpublished: {
+          alias: "u",
+          describe: "List unpublished posts",
+          type: "boolean",
+          default: true,
+        },
+      },
+      list
+    )
     .command(
       "edit [index]",
       "Edit a draft post by index",
@@ -101,13 +120,13 @@ const main = async () => {
       {
         published: {
           alias: "p",
-          describe: "Just remove published posts",
+          describe: "Remove published posts",
           type: "boolean",
           default: true,
         },
         unpublished: {
           alias: "u",
-          describe: "Just remove unpublished posts",
+          describe: "Remove unpublished posts",
           type: "boolean",
           default: false,
         },
@@ -115,7 +134,18 @@ const main = async () => {
       cleanPosts
     )
     .demandCommand(1, "Please specify a command")
-    .help().argv;
+    .fail((msg, err, yargs) => {
+      displayBanner();
+      if(msg) {
+        console.error(msg);
+      }
+      console.log(yargs.help());
+      process.exit(1);
+    })
+    .showHelpOnFail(false)
+    .help()
+    .epilogue('For more information, check the documentation.')
+    .parse();
 };
 
 // Handle top-level await

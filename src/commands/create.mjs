@@ -78,7 +78,7 @@ export const createPost = async (argv) => {
             emptyLineCount++;
 
             // If we have 3 consecutive empty lines, we're done
-            if (emptyLineCount >= 3) {
+            if (emptyLineCount >= 2) {
               // Remove the last empty lines (if any) from the result
               while (
                 lines.length > 0 &&
@@ -263,7 +263,7 @@ export const createPost = async (argv) => {
     console.log("\n", chalk.green("✓"), "Post created successfully!");
     console.log(
       chalk.gray("  Run"),
-      chalk.cyan("social-light unpublished"),
+      chalk.cyan("social-light list"),
       chalk.gray("to see your scheduled posts")
     );
   } catch (error) {

@@ -80,13 +80,14 @@ This will guide you through creating a new post with:
 ### Manage Posts
 
 ```bash
-# List unpublished posts
-social-light unpublished
+# List all unpublished post
+social-light list
+# List all post (including published)
+social-light list --published
+```
 
-# List published posts
-social-light published
-
-# Edit a post by index
+```bash
+# Edit a post by unpublished index
 social-light edit 1
 ```
 
