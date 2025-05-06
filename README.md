@@ -4,6 +4,13 @@
 
 An AI-powered social media scheduling tool for Bluesky with CLI and web interface. More platforms coming soon!
 
+
+## Video overview
+
+<video src="https://github.com/user-attachments/assets/7ef8f61f-0421-41a9-8828-29ec44c2cc19
+"  style="height:480px" >
+
+
 ## Features
 
 - **CLI Interface**: Create, manage, and publish posts directly from your terminal
