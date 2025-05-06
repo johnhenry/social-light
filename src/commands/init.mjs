@@ -158,6 +158,7 @@ export const initialize = async (argv) => {
           {
             type: "input",
             name: "openaiKey",
+            mask: "*",
             message:
               "Enter your OpenAI API key for AI features (press Enter to skip):",
           },
