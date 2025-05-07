@@ -10,6 +10,7 @@ import { hideBin } from "yargs/helpers";
 import chalk from "chalk";
 
 import { initialize } from "./commands/init.mjs";
+import { uninitialize } from "./commands/uninit.mjs";
 import { createPost } from "./commands/create.mjs";
 
 import { list } from "./commands/list.mjs";
@@ -41,6 +42,7 @@ const main = async () => {
       console.log(NPMPackage.version);
     })
     .command("init", "Initialize Social Light configuration", {}, initialize)
+    .command("uninit", "Remove Social Light configuration", {}, uninitialize)
     .command(
       "create",
       "Create a new social media post",

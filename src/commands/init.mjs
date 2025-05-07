@@ -3,7 +3,6 @@ import ora from "ora";
 import inquirer from "inquirer";
 import fs from "fs-extra";
 import path from "path";
-import os from "os";
 import dotenv from "dotenv";
 
 import {
