@@ -26,9 +26,6 @@ An AI-powered social media scheduling tool for Bluesky with CLI and web interfac
 
 [Node.js/npm](https://nodejs.org) must be installed on your system
 
-> [!WARNING]  
-> There's a know issues with the latest version of Node.js (v23) and 'better-sqlite3'. Please use Node.js v22 (LTS) or lower.
-
 ## Accounts
 
 You will need an account on [blue sky](https://bsky.app) and an [OpenAI](https://openai.com) account to use the AI features.
