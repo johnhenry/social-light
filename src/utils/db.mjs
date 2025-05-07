@@ -90,6 +90,7 @@ export const initializeDb = (existingDb = null) => {
         content TEXT NOT NULL,
         platforms TEXT,
         publish_date TEXT,
+        publish_time TEXT,
         published INTEGER DEFAULT 0,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP

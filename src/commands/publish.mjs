@@ -15,15 +15,21 @@ const isEligibleForPublishing = (post) => {
     return true;
   }
 
-  // Check if publish date is today or in the past
-  const publishDate = new Date(post.publish_date);
+  // Check if publish date and time is now or in the past
+  let publishDateTime;
+  
+  // If the date includes time component (contains 'T' or ' ')
+  if (post.publish_date.includes('T') || post.publish_date.includes(' ')) {
+    publishDateTime = new Date(post.publish_date);
+  } else {
+    // If only date is provided, assume start of day
+    publishDateTime = new Date(post.publish_date);
+    publishDateTime.setHours(0, 0, 0, 0);
+  }
+  
   const now = new Date();
-
-  // Reset time to compare dates only
-  publishDate.setHours(0, 0, 0, 0);
-  now.setHours(0, 0, 0, 0);
-
-  return publishDate <= now;
+  
+  return publishDateTime <= now;
 };
 
 /**

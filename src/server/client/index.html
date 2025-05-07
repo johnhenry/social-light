@@ -23,6 +23,23 @@
         --padding-card: 20px;
         --padding-section: 16px;
       }
+
+      /* Fix for calendar layout */
+      .calendar {
+        width: 100%;
+        overflow-x: hidden;
+      }
+      
+      /* Fix for time input to match other inputs */
+      input[type="time"] {
+        appearance: none;
+        -webkit-appearance: none;
+        padding: 8px 12px;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--color-border);
+        background-color: var(--color-bg-dark);
+        color: var(--color-text-primary);
+      }
     </style>
   </head>
   <body>

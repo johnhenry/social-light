@@ -78,10 +78,10 @@ export const generateTitle = async (content) => {
 };
 
 /**
- * Suggest a publish date for a post using AI
- * @returns {string} Suggested publish date in YYYY-MM-DD format
+ * Suggest a publish date and time for a post using AI
+ * @returns {string} Suggested publish date and time in YYYY-MM-DD HH:MM format
  * @example
- * const date = await suggestPublishDate();
+ * const dateTime = await suggestPublishDate();
  */
 export const suggestPublishDate = async () => {
   const openai = getOpenAIClient();
@@ -94,10 +94,11 @@ export const suggestPublishDate = async () => {
     const tableExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='posts';").get();
     
     if (!tableExists) {
-      // If table doesn't exist, just return tomorrow's date
+      // If table doesn't exist, just return tomorrow's date at noon
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      return tomorrow.toISOString().split('T')[0];
+      tomorrow.setHours(12, 0, 0, 0);
+      return `${tomorrow.toISOString().split('T')[0]} 12:00`;
     }
     
     // Get historical posts for analysis if table exists
@@ -108,14 +109,15 @@ export const suggestPublishDate = async () => {
       // Fallback to simple date suggestion if AI is disabled or not enough data
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      return tomorrow.toISOString().split('T')[0];
+      tomorrow.setHours(12, 0, 0, 0);
+      return `${tomorrow.toISOString().split('T')[0]} 12:00`;
     }
     
     // Format post history for the AI
     const postHistory = posts
       .filter(post => post.publish_date)
       .map(post => ({
-        date: post.publish_date,
+        dateTime: post.publish_date,
         platform: post.platforms
       }));
     
@@ -124,33 +126,40 @@ export const suggestPublishDate = async () => {
       messages: [
         {
           role: 'system',
-          content: 'You are a social media scheduling assistant. Based on the user\'s posting history, suggest an optimal date for their next post. Consider post frequency, patterns, and optimal timing. Return only the date in YYYY-MM-DD format.'
+          content: 'You are a social media scheduling assistant. Based on the user\'s posting history, suggest an optimal date and time for their next post. Consider post frequency, patterns, and optimal timing for engagement. Return the date and time in YYYY-MM-DD HH:MM format using 24-hour time.'
         },
         {
           role: 'user',
-          content: `Here is my posting history: ${JSON.stringify(postHistory)}. Today is ${today.toISOString().split('T')[0]}. When should I schedule my next post?`
+          content: `Here is my posting history: ${JSON.stringify(postHistory)}. Today is ${today.toISOString().split('T')[0]} ${today.getHours()}:${today.getMinutes().toString().padStart(2, '0')}. When should I schedule my next post?`
         }
       ],
-      max_tokens: 20
+      max_tokens: 30
     });
     
-    const suggestedDate = response.choices[0].message.content.trim();
+    const suggestedDateTime = response.choices[0].message.content.trim();
     
-    // Validate date format
-    if (/^\d{4}-\d{2}-\d{2}$/.test(suggestedDate)) {
-      return suggestedDate;
+    // Validate date and time format
+    if (/^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}$/.test(suggestedDateTime)) {
+      return suggestedDateTime;
     }
     
-    // Extract date if the AI included other text
-    const dateMatch = suggestedDate.match(/\d{4}-\d{2}-\d{2}/);
+    // Extract date and time if the AI included other text
+    const dateTimeMatch = suggestedDateTime.match(/(\d{4}-\d{2}-\d{2}) (\d{1,2}:\d{2})/);
+    if (dateTimeMatch) {
+      return `${dateTimeMatch[1]} ${dateTimeMatch[2]}`;
+    }
+    
+    // Try to extract just the date if time format fails
+    const dateMatch = suggestedDateTime.match(/\d{4}-\d{2}-\d{2}/);
     if (dateMatch) {
-      return dateMatch[0];
+      return `${dateMatch[0]} 12:00`;
     }
     
     // Fallback
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
+    tomorrow.setHours(12, 0, 0, 0);
+    return `${tomorrow.toISOString().split('T')[0]} 12:00`;
   } catch (error) {
     console.error('Error suggesting publish date:', error.message);
     
@@ -158,7 +167,8 @@ export const suggestPublishDate = async () => {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
+    tomorrow.setHours(12, 0, 0, 0);
+    return `${tomorrow.toISOString().split('T')[0]} 12:00`;
   }
 };
 

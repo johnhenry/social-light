@@ -115,10 +115,11 @@ const setupApiRoutes = (app) => {
     // Remove sensitive information
     const safeConfig = {
       ...config,
-      // Add default platforms for client
+      // Always ensure platforms are available
       platforms: [
-        // { id: 'twitter', name: 'Twitter', icon: 'twitter' },
         { id: "bluesky", name: "Bluesky", icon: "cloud" },
+        // Add more platforms here when they become available
+        // { id: 'twitter', name: 'Twitter', icon: 'twitter' },
         // { id: 'tiktok', name: 'TikTok', icon: 'music' }
       ],
     };
@@ -155,17 +156,23 @@ const setupApiRoutes = (app) => {
   // Create new post
   app.post("/api/posts", async (req, res) => {
     try {
-      const { title, content, platforms, publish_date } = req.body;
+      const { title, content, platforms, publish_date, publish_time } = req.body;
 
       if (!content) {
         return res.status(400).json({ error: "Content is required" });
+      }
+
+      // Combine date and time if both are provided
+      let dateTimeValue = publish_date;
+      if (publish_date && publish_time) {
+        dateTimeValue = `${publish_date} ${publish_time}`;
       }
 
       const postId = createPost({
         title,
         content,
         platforms: Array.isArray(platforms) ? platforms.join(",") : platforms,
-        publish_date,
+        publish_date: dateTimeValue,
       });
 
       logAction("post_created", { postId, source: "web" });
@@ -180,7 +187,7 @@ const setupApiRoutes = (app) => {
   app.put("/api/posts/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const { title, content, platforms, publish_date } = req.body;
+      const { title, content, platforms, publish_date, publish_time } = req.body;
 
       const post = getPostById(id);
 
@@ -188,11 +195,17 @@ const setupApiRoutes = (app) => {
         return res.status(404).json({ error: "Post not found" });
       }
 
+      // Combine date and time if both are provided
+      let dateTimeValue = publish_date;
+      if (publish_date && publish_time) {
+        dateTimeValue = `${publish_date} ${publish_time}`;
+      }
+
       const success = updatePost(id, {
         title,
         content,
         platforms: Array.isArray(platforms) ? platforms.join(",") : platforms,
-        publish_date,
+        publish_date: dateTimeValue,
       });
 
       if (!success) {
@@ -283,11 +296,21 @@ const setupApiRoutes = (app) => {
     }
   });
 
-  // Suggest publish date with AI
+  // Suggest publish date and time with AI
   app.get("/api/ai/date", async (req, res) => {
     try {
-      const date = await suggestPublishDate();
-      res.json({ date });
+      const dateTime = await suggestPublishDate();
+      
+      // Parse datetime to separate date and time if needed for client
+      let date, time;
+      if (dateTime.includes(" ")) {
+        [date, time] = dateTime.split(" ");
+      } else {
+        date = dateTime;
+        time = "12:00"; // Default time
+      }
+      
+      res.json({ dateTime, date, time });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }

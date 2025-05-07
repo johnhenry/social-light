@@ -337,7 +337,7 @@ const renderPostEditor = () => {
 
   // Get selected platforms
   const selectedPlatforms = post.platforms
-    ? post.platforms.split(",").map((p) => p.trim())
+    ? post.platforms.split(",").map((p) => p.trim().toLowerCase())
     : [];
 
   mainContent.innerHTML = `
@@ -395,7 +395,7 @@ const renderPostEditor = () => {
               type="date" 
               id="post-date" 
               class="form-control" 
-              value="${post.publish_date || ""}"
+              value="${extractDatePart(post.publish_date) || ""}"
               placeholder="YYYY-MM-DD"
             >
             ${
@@ -409,10 +409,30 @@ const renderPostEditor = () => {
         </div>
         
         <div class="form-group">
+          <label class="form-label" for="post-time">Publish Time</label>
+          <div class="d-flex gap-sm">
+            <input 
+              type="time" 
+              id="post-time" 
+              class="form-control" 
+              value="${extractTimePart(post.publish_date) || "12:00"}"
+              placeholder="HH:MM"
+            >
+            ${
+              state.config.aiEnabled
+                ? `
+              <button type="button" class="btn" id="suggest-time-btn">Suggest with AI</button>
+            `
+                : ""
+            }
+          </div>
+        </div>
+        
+        <div class="form-group">
           <label class="form-label">Platforms</label>
           <div class="d-flex gap-md flex-wrap">
-            ${platformOptions
-              .map(
+            ${platformOptions && platformOptions.length > 0 ? 
+              platformOptions.map(
                 (platform) => `
               <label class="d-flex align-center gap-sm">
                 <input 
@@ -424,8 +444,17 @@ const renderPostEditor = () => {
                 ${platform.name}
               </label>
             `
-              )
-              .join("")}
+              ).join("") : 
+              `<label class="d-flex align-center gap-sm">
+                <input 
+                  type="checkbox" 
+                  name="platforms" 
+                  value="bluesky"
+                  ${selectedPlatforms.includes("bluesky") || selectedPlatforms.includes("Bluesky") ? "checked" : ""}
+                >
+                Bluesky
+              </label>`
+            }
           </div>
         </div>
         
@@ -457,13 +486,21 @@ const renderPostEditor = () => {
       // Get form values
       const title = document.getElementById("post-title").value;
       const content = document.getElementById("post-content").value;
-      const publishDate = document.getElementById("post-date").value;
+      const date = document.getElementById("post-date").value;
+      const time = document.getElementById("post-time").value || "12:00";
+      const publishDate = date ? `${date} ${time}` : ""; // Combine date and time
       const platformElements = document.querySelectorAll(
         'input[name="platforms"]:checked'
       );
-      const platforms = Array.from(platformElements)
+      // Make sure we have at least one platform (Bluesky is default)
+      let platforms = Array.from(platformElements)
         .map((el) => el.value)
         .join(",");
+        
+      // If no platforms selected, default to Bluesky
+      if (!platforms) {
+        platforms = "bluesky";
+      }
 
       // Validate form
       if (!content) {
@@ -709,12 +746,45 @@ const renderPostEditor = () => {
 
         const result = await response.json();
         document.getElementById("post-date").value = result.date;
+        // Also update the time field if available
+        if (result.time) {
+          document.getElementById("post-time").value = result.time;
+        }
       } catch (error) {
         console.error("Error suggesting date:", error);
         alert(`Error: ${error.message}`);
       } finally {
         suggestDateBtn.disabled = false;
         suggestDateBtn.textContent = "Suggest with AI";
+      }
+    });
+  }
+  
+  // Suggest time with AI (using same endpoint as date, but only updating time)
+  const suggestTimeBtn = document.getElementById("suggest-time-btn");
+  if (suggestTimeBtn) {
+    suggestTimeBtn.addEventListener("click", async () => {
+      try {
+        suggestTimeBtn.disabled = true;
+        suggestTimeBtn.textContent = "Generating...";
+
+        const response = await fetch("/api/ai/date");
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to suggest time");
+        }
+
+        const result = await response.json();
+        if (result.time) {
+          document.getElementById("post-time").value = result.time;
+        }
+      } catch (error) {
+        console.error("Error suggesting time:", error);
+        alert(`Error: ${error.message}`);
+      } finally {
+        suggestTimeBtn.disabled = false;
+        suggestTimeBtn.textContent = "Suggest with AI";
       }
     });
   }
@@ -899,32 +969,84 @@ const publishPost = async (postId) => {
   }
 };
 
-// Format date for display
-const formatDate = (dateStr) => {
-  if (!dateStr) return "No date set";
+// Helper function to extract date part from datetime string
+const extractDatePart = (dateTimeStr) => {
+  if (!dateTimeStr) return "";
+  
+  // Handle different formats
+  if (dateTimeStr.includes('T')) {
+    return dateTimeStr.split('T')[0];
+  } else if (dateTimeStr.includes(' ')) {
+    return dateTimeStr.split(' ')[0];
+  }
+  
+  // If only date is present
+  return dateTimeStr;
+};
 
-  const date = new Date(dateStr);
+// Helper function to extract time part from datetime string
+const extractTimePart = (dateTimeStr) => {
+  if (!dateTimeStr) return "12:00";
+  
+  // Handle different formats
+  if (dateTimeStr.includes('T')) {
+    const timePart = dateTimeStr.split('T')[1];
+    return timePart ? timePart.substr(0, 5) : "12:00"; // Get HH:MM part
+  } else if (dateTimeStr.includes(' ')) {
+    return dateTimeStr.split(' ')[1] || "12:00";
+  }
+  
+  // If only date is present, return default time
+  return "12:00";
+};
+
+// Format date for display
+const formatDate = (dateTimeStr) => {
+  if (!dateTimeStr) return "No date set";
+
+  const date = new Date(dateTimeStr);
   const now = new Date();
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
   // Check if date is today or tomorrow
   if (date.toDateString() === now.toDateString()) {
-    return "Today";
+    return `Today at ${formatTime(dateTimeStr)}`;
   } else if (date.toDateString() === tomorrow.toDateString()) {
-    return "Tomorrow";
+    return `Tomorrow at ${formatTime(dateTimeStr)}`;
   }
 
-  // Format as Month Day, Year
+  // Format as Month Day, Year at Time
   const options = { month: "short", day: "numeric", year: "numeric" };
-  return date.toLocaleDateString(undefined, options);
+  return `${date.toLocaleDateString(undefined, options)} at ${formatTime(dateTimeStr)}`;
+};
+
+// Format time for display
+const formatTime = (dateTimeStr) => {
+  if (!dateTimeStr) return "";
+  
+  const time = extractTimePart(dateTimeStr);
+  if (!time) return "";
+  
+  // Convert 24-hour time to 12-hour format with AM/PM
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const formattedHour = hour % 12 || 12; // Convert 0 to 12 for 12 AM
+  
+  return `${formattedHour}:${minutes} ${ampm}`;
 };
 
 // Format platforms for display
 const formatPlatforms = (platforms) => {
   if (!platforms) return "";
 
-  const platformsList = platforms.split(",").map((p) => p.trim());
+  // Handle empty string but not null/undefined
+  if (platforms === "") return "";
+
+  // Make sure we have a string and filter out empty values
+  const platformsStr = String(platforms);
+  const platformsList = platformsStr.split(",").map((p) => p.trim()).filter(p => p);
 
   return platformsList
     .map((platform) => {

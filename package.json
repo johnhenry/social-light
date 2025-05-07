@@ -1,6 +1,6 @@
 {
   "name": "social-light",
-  "version": "0.1.3",
+  "version": "0.1.4-alpha",
   "description": "AI-powered social media scheduling tool",
   "main": "src/index.mjs",
   "type": "module",
