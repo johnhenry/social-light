@@ -317,3 +317,39 @@ export const deletePosts = (options = { published: true }) => {
     throw error;
   }
 };
+
+/**
+ * Delete a single post by ID
+ * @param {number} id - Post ID
+ * @returns {boolean} True if successful
+ * @example
+ * const success = deletePost(1);
+ */
+export const deletePost = (id) => {
+  const db = getDb();
+  
+  try {
+    // Get post to determine if it was published (for logging)
+    const post = getPostById(id);
+    if (!post) return false;
+    
+    // Delete the post
+    const result = db.prepare('DELETE FROM posts WHERE id = ?').run(id);
+    
+    if (result.changes > 0) {
+      // Log the action
+      logAction('post_deleted', { 
+        postId: id,
+        wasPublished: post.published === 1,
+        title: post.title
+      });
+      
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error deleting post:', error.message);
+    return false;
+  }
+};

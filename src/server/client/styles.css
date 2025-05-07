@@ -125,6 +125,18 @@ p {
   color: white;
 }
 
+.btn-sm.btn-danger {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-color: var(--color-accent-danger);
+  color: var(--color-accent-danger);
+}
+
+.btn-sm.btn-danger:hover {
+  background-color: var(--color-accent-danger);
+  color: white;
+}
+
 .btn-sm {
   padding: 4px 8px;
   font-size: 12px;

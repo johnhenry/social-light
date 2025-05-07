@@ -215,6 +215,9 @@ const renderUnpublishedPosts = () => {
                 <button class="btn btn-sm btn-action" data-action="publish-post" data-post-id="${
                   post.id
                 }">Publish</button>
+                <button class="btn btn-sm btn-danger" data-action="delete-post" data-post-id="${
+                  post.id
+                }">Delete</button>
               </div>
             </div>
           </div>
@@ -248,6 +251,18 @@ const renderUnpublishedPosts = () => {
       button.addEventListener("click", async () => {
         const postId = parseInt(button.dataset.postId, 10);
         await publishPost(postId);
+      });
+    });
+    
+  // Delete post buttons
+  mainContent
+    .querySelectorAll('[data-action="delete-post"]')
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
+          const postId = parseInt(button.dataset.postId, 10);
+          await deletePost(postId);
+        }
       });
     });
 
@@ -940,8 +955,16 @@ const publishPost = async (postId) => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Failed to publish post");
+      const errorData = await response.json();
+      
+      // Special handling for scheduled posts
+      if (errorData.error === "Post is scheduled for future publication" && errorData.scheduledTime) {
+        const scheduledDate = new Date(errorData.scheduledTime);
+        const formattedDate = formatDate(scheduledDate);
+        throw new Error(`This post is scheduled for ${formattedDate}. It cannot be published before that time.`);
+      }
+      
+      throw new Error(errorData.error || "Failed to publish post");
     }
 
     const result = await response.json();
@@ -965,6 +988,54 @@ const publishPost = async (postId) => {
     if (button) {
       button.disabled = false;
       button.textContent = "Publish";
+    }
+  }
+};
+
+// Delete a post
+const deletePost = async (postId) => {
+  try {
+    const button = document.querySelector(
+      `[data-action="delete-post"][data-post-id="${postId}"]`
+    );
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Deleting...";
+    }
+
+    // Create a distinct request path to avoid conflicts
+    const response = await fetch(`/api/posts/${postId}/delete`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to delete post");
+    }
+
+    // Refresh posts
+    await fetchPosts();
+
+    // Update view
+    renderApp();
+
+    // Show success message
+    alert("Post deleted successfully!");
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    alert(`Error: ${error.message}`);
+
+    // Re-enable button
+    const button = document.querySelector(
+      `[data-action="delete-post"][data-post-id="${postId}"]`
+    );
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Delete";
     }
   }
 };
@@ -1011,28 +1082,34 @@ const formatDate = (dateTimeStr) => {
 
   // Check if date is today or tomorrow
   if (date.toDateString() === now.toDateString()) {
-    return `Today at ${formatTime(dateTimeStr)}`;
+    return `Today at ${formatTime(date)}`;
   } else if (date.toDateString() === tomorrow.toDateString()) {
-    return `Tomorrow at ${formatTime(dateTimeStr)}`;
+    return `Tomorrow at ${formatTime(date)}`;
   }
 
   // Format as Month Day, Year at Time
   const options = { month: "short", day: "numeric", year: "numeric" };
-  return `${date.toLocaleDateString(undefined, options)} at ${formatTime(dateTimeStr)}`;
+  return `${date.toLocaleDateString(undefined, options)} at ${formatTime(date)}`;
 };
 
 // Format time for display
 const formatTime = (dateTimeStr) => {
   if (!dateTimeStr) return "";
   
-  const time = extractTimePart(dateTimeStr);
-  if (!time) return "";
+  // Handle date object or string
+  let date;
+  if (dateTimeStr instanceof Date) {
+    date = dateTimeStr;
+  } else {
+    date = new Date(dateTimeStr);
+  }
   
-  // Convert 24-hour time to 12-hour format with AM/PM
-  const [hours, minutes] = time.split(':');
-  const hour = parseInt(hours, 10);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const formattedHour = hour % 12 || 12; // Convert 0 to 12 for 12 AM
+  // Use the Date object's built-in time formatting methods
+  // This handles timezone correctly
+  const hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const formattedHour = hours % 12 || 12; // Convert 0 to 12 for 12 AM
   
   return `${formattedHour}:${minutes} ${ampm}`;
 };

@@ -11,6 +11,7 @@ import {
   updatePost,
   markAsPublished,
   logAction,
+  deletePost,
 } from "../utils/db.mjs";
 import { getSocialAPI } from "../utils/social/index.mjs";
 import {
@@ -100,6 +101,7 @@ const setupApiRoutes = (app) => {
         "/api/posts",
         "/api/posts/:id",
         "/api/publish/:id",
+        "/api/posts/:id/delete",
         "/api/ai/title",
         "/api/ai/date",
         "/api/ai/enhance",
@@ -220,6 +222,28 @@ const setupApiRoutes = (app) => {
     }
   });
 
+  // Delete post - using a different route pattern to avoid conflicts
+  app.post("/api/posts/:id/delete", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const post = getPostById(id);
+
+      if (!post) {
+        return res.status(404).json({ error: "Post not found" });
+      }
+
+      const success = deletePost(id);
+
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(500).json({ error: "Failed to delete post" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Publish post
   app.post("/api/publish/:id", async (req, res) => {
     try {
@@ -238,6 +262,29 @@ const setupApiRoutes = (app) => {
         return res
           .status(400)
           .json({ error: "No platforms specified for post" });
+      }
+      
+      // Check if post is eligible for publishing based on date/time
+      if (post.publish_date) {
+        let publishDateTime;
+        
+        // If the date includes time component (contains 'T' or ' ')
+        if (post.publish_date.includes('T') || post.publish_date.includes(' ')) {
+          publishDateTime = new Date(post.publish_date);
+        } else {
+          // If only date is provided, assume start of day
+          publishDateTime = new Date(post.publish_date);
+          publishDateTime.setHours(0, 0, 0, 0);
+        }
+        
+        const now = new Date();
+        
+        if (publishDateTime > now) {
+          return res.status(400).json({ 
+            error: "Post is scheduled for future publication",
+            scheduledTime: publishDateTime.toISOString()
+          });
+        }
       }
 
       // Initialize social API
